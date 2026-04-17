@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Modifier Réception #{{ object.id }}{% endblock %}
+
+{% block content %}
+<div class="space-5">
+  <div class="d-flex justify-content-between align-items-center mb-5">
+    <div>
+      <h1><i class="bi bi-pencil text-warning me-2"></i>Modifier Réception #{{ object.id }}</h1>
+      <p class="text-muted mb-0">{{ object.lot_reference }}</p>
+    </div>
+    <a href="{% url 'reception_list' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Retour
+    </a>
+  </div>
+
+  {% if form.errors %}
+  <div class="alert alert-danger">
+    <ul class="mb-0">
+      {% for field in form %}
+        {% for error in field.errors %}
+          <li>{{ field.label }} : {{ error }}</li>
+        {% endfor %}
+      {% endfor %}
+      {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card border-0 shadow">
+        <div class="card-body p-5">
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <!-- Fournisseur + Date expiration -->
+            <div class="row g-4 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-bold">
+                  <i class="bi bi-building text-info me-1"></i>Fournisseur
+                </label>
+                {{ form.fournisseur }}
+                {% if form.fournisseur.errors %}
+                  <div class="text-danger small mt-1">{{ form.fournisseur.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">
+                  <i class="bi bi-calendar-x text-warning me-1"></i>Date expiration
+                </label>
+                {{ form.date_expiration }}
+                {% if form.date_expiration.errors %}
+                  <div class="text-danger small mt-1">{{ form.date_expiration.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Quantité totale (calculée) -->
+            <div class="mb-4">
+              <label class="form-label fw-bold">
+                <i class="bi bi-box-seam text-success me-1"></i>Quantité totale (kg)
+              </label>
+              <input type="number" id="quantite-display" class="form-control bg-light fw-bold"
+                     value="{{ object.quantite }}" step="0.001" readonly>
+              <input type="hidden" name="quantite" id="quantite-hidden" value="{{ object.quantite }}">
+              <div class="form-text">Calculée automatiquement à partir des quantités par lot</div>
+            </div>
+
+            <!-- Tableau des lots -->
+            <hr class="my-4">
+            <h6 class="text-muted text-uppercase mb-3">
+              <i class="bi bi-upc-scan me-1"></i>Lots
+              <small class="text-muted fw-normal ms-2">(Lot 1 obligatoire)</small>
+            </h6>
+
+            <div class="table-responsive">
+              <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width:130px">ID Canonique</th>
+                    <th>Code Lot réel <span class="text-danger">*</span><span class="text-muted fw-normal"> (lot 1)</span></th>
+                    <th style="width:160px">Quantité (kg)</th>
+                  </tr>
+                </thead>
+                <tbody>
+
+                  <tr>
+                    <td><code class="text-primary">LOT-{{ object.id }}-01</code></td>
+                    <td>
+                      {{ form.lot_code1 }}
+                      {% if form.lot_code1.errors %}<div class="text-danger small">{{ form.lot_code1.errors.0 }}</div>{% endif %}
+                    </td>
+                    <td>
+                      <input type="number" class="form-control lot-qte" data-lot="1"
+                             step="0.001" min="0" placeholder="0.000">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td><code class="text-primary">LOT-{{ object.id }}-02</code></td>
+                    <td>{{ form.lot_code2 }}</td>
+                    <td>
+                      <input type="number" class="form-control lot-qte" data-lot="2"
+                             step="0.001" min="0" placeholder="0.000">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td><code class="text-primary">LOT-{{ object.id }}-03</code></td>
+                    <td>{{ form.lot_code3 }}</td>
+                    <td>
+                      <input type="number" class="form-control lot-qte" data-lot="3"
+                             step="0.001" min="0" placeholder="0.000">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td><code class="text-primary">LOT-{{ object.id }}-04</code></td>
+                    <td>{{ form.lot_code4 }}</td>
+                    <td>
+                      <input type="number" class="form-control lot-qte" data-lot="4"
+                             step="0.001" min="0" placeholder="0.000">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td><code class="text-primary">LOT-{{ object.id }}-05</code></td>
+                    <td>{{ form.lot_code5 }}</td>
+                    <td>
+                      <input type="number" class="form-control lot-qte" data-lot="5"
+                             step="0.001" min="0" placeholder="0.000">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td><code class="text-primary">LOT-{{ object.id }}-06</code></td>
+                    <td>{{ form.lot_code6 }}</td>
+                    <td>
+                      <input type="number" class="form-control lot-qte" data-lot="6"
+                             step="0.001" min="0" placeholder="0.000">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td><code class="text-primary">LOT-{{ object.id }}-07</code></td>
+                    <td>{{ form.lot_code7 }}</td>
+                    <td>
+                      <input type="number" class="form-control lot-qte" data-lot="7"
+                             step="0.001" min="0" placeholder="0.000">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td><code class="text-primary">LOT-{{ object.id }}-08</code></td>
+                    <td>{{ form.lot_code8 }}</td>
+                    <td>
+                      <input type="number" class="form-control lot-qte" data-lot="8"
+                             step="0.001" min="0" placeholder="0.000">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td><code class="text-primary">LOT-{{ object.id }}-09</code></td>
+                    <td>{{ form.lot_code9 }}</td>
+                    <td>
+                      <input type="number" class="form-control lot-qte" data-lot="9"
+                             step="0.001" min="0" placeholder="0.000">
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td><code class="text-primary">LOT-{{ object.id }}-10</code></td>
+                    <td>{{ form.lot_code10 }}</td>
+                    <td>
+                      <input type="number" class="form-control lot-qte" data-lot="10"
+                             step="0.001" min="0" placeholder="0.000">
+                    </td>
+                  </tr>
+
+                  <!-- Ligne total -->
+                  <tr class="table-success fw-bold">
+                    <td colspan="2" class="text-end">Total</td>
+                    <td><span id="total-display">0.000</span> kg</td>
+                  </tr>
+
+                </tbody>
+              </table>
+            </div>
+
+            <div class="d-flex gap-3 justify-content-end mt-4">
+              <a href="{% url 'reception_list' %}" class="btn btn-outline-secondary px-4">Annuler</a>
+              <button type="submit" class="btn btn-warning px-4">
+                <i class="bi bi-check-lg me-1"></i>Enregistrer
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const INITIAL_TOTAL = parseFloat("{{ object.quantite|stringformat:'f' }}") || 0;
+  const qteInputs = document.querySelectorAll('.lot-qte');
+  const codeInputs = document.querySelectorAll('[name^="lot_code"]');
+
+  // Distribute initial total evenly among non-empty lots
+  function distributeInitial() {
+    // Count non-empty lot codes
+    let nonEmpty = 0;
+    codeInputs.forEach(inp => { if (inp.value.trim()) nonEmpty++; });
+    if (nonEmpty === 0) nonEmpty = 1;
+
+    const perLot = (INITIAL_TOTAL / nonEmpty).toFixed(3);
+
+    // Assign to each lot that has a code
+    let assigned = 0;
+    qteInputs.forEach((qteInp, i) => {
+      const codeInp = codeInputs[i];
+      if (codeInp && codeInp.value.trim()) {
+        qteInp.value = perLot;
+        assigned++;
+      } else {
+        qteInp.value = '';
+      }
+    });
+    updateTotal();
+  }
+
+  function updateTotal() {
+    let total = 0;
+    qteInputs.forEach(inp => { total += parseFloat(inp.value) || 0; });
+    const rounded = total.toFixed(3);
+    document.getElementById('quantite-display').value = rounded;
+    document.getElementById('quantite-hidden').value = rounded;
+    document.getElementById('total-display').textContent = rounded;
+  }
+
+  qteInputs.forEach(inp => inp.addEventListener('input', updateTotal));
+
+  // Also update when a code is cleared (hide its quantity)
+  codeInputs.forEach((codeInp, i) => {
+    codeInp.addEventListener('input', function () {
+      const qteInp = qteInputs[i];
+      if (!this.value.trim()) {
+        qteInp.value = '';
+        updateTotal();
+      }
+    });
+  });
+
+  distributeInitial();
+})();
+</script>
+{% endblock %}

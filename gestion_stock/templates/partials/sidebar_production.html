@@ -1,0 +1,57 @@
+{% load static %}
+<div class="sidebar-inner">
+
+  <!-- Logo -->
+  <div class="sb-logo">
+    <img src="{% static 'images/logo.png' %}" alt="Logo">
+    <div class="sb-logo-text">
+      <div class="sb-logo-title" style="color: #fbbf24;">Production Crème</div>
+      <div class="sb-logo-sub">Atelier de Fabrication</div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="sb-section">Tableau de bord</div>
+
+    <a href="{% url 'production:data_performance' %}"
+       class="{% if request.resolver_match.url_name == 'data_performance' %}active{% endif %}">
+      <i class="bi bi-graph-up"></i> Data Performance
+    </a>
+
+    <div class="sb-section">Production</div>
+
+    <a href="{% url 'production:nouvelle_production' %}"
+       class="{% if request.resolver_match.url_name == 'nouvelle_production' %}active{% endif %}">
+      <i class="bi bi-play-circle"></i> Nouvelle Production
+    </a>
+
+    <a href="{% url 'production:historique' %}"
+       class="{% if request.resolver_match.url_name and 'historique' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="bi bi-clock-history"></i> Historique consommation
+    </a>
+
+    <div class="sb-section">Stock & Compte</div>
+
+    <a href="{% url 'production:stock' %}"
+       class="{% if request.resolver_match.url_name == 'stock' %}active{% endif %}">
+      <i class="bi bi-boxes"></i> Stock actuel
+    </a>
+
+    <a href="{% url 'production:profile' %}"
+       class="{% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+      <i class="bi bi-person-circle"></i> Mon profil
+    </a>
+  </nav>
+
+  <!-- Logout -->
+  <div class="sb-logout">
+    <form method="post" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit">
+        <i class="bi bi-box-arrow-right"></i> Déconnexion
+      </button>
+    </form>
+  </div>
+
+</div>

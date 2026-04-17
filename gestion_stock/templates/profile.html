@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Magasinier{% endblock %}
+
+{% block content %}
+<div class="container my-5" style="max-width: 1000px;">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="mb-2">
+        <i class="bi bi-people text-primary me-2"></i>
+        Liste des Magasinier
+      </h1>
+      <p class="text-muted">Opérateurs de type "magasin" uniquement (admins filtrés)</p>
+    </div>
+    <a href="/admin/gestion_stock/profile/" class="btn btn-primary btn-lg">
+      <i class="bi bi-gear me-2"></i>Gérer dans Admin
+    </a>
+  </div>
+
+  {% if profiles %}
+  <div class="card shadow-lg border-0">
+    <div class="table-responsive">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Matricule</th>
+            <th>Nom</th>
+            <th>Prénom</th>
+            <th>Type</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for profile in profiles %}
+          <tr>
+            <td>
+              <code class="bg-light px-3 py-2 rounded-pill fw-semibold">{{ profile.matricule }}</code>
+            </td>
+            <td class="fw-bold">{{ profile.nom }}</td>
+            <td>{{ profile.prenom }}</td>
+            <td>
+              <span class="badge-type">Magasinier</span>
+            </td>
+            <td class="text-center">
+              <div class="btn-group" role="group">
+                <a href="#" class="btn btn-outline-primary btn-sm">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="/admin/gestion_stock/profile/{{ profile.id }}/change/" target="_blank" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-pencil"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="text-center py-8 bg-light rounded-3 p-5">
+    <i class="bi bi-people-slash display-1 text-muted mb-4 opacity-50"></i>
+    <h3 class="text-muted mb-3">Aucun magasinier trouvé</h3>
+    <p class="text-muted mb-4 lead">Créez des opérateurs de type "magasin" dans Django Admin</p>
+    <a href="/admin/gestion_stock/profile/add/?type_operateur=magasin" class="btn btn-primary btn-lg" target="_blank">
+      <i class="bi bi-plus-circle me-2"></i>Ajouter Magasinier
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+.custom-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 0;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+.custom-table thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.custom-table th {
+  padding: 16px 20px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.custom-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f8f9fa;
+  vertical-align: middle;
+}
+
+.custom-table tr:hover {
+  background: linear-gradient(90deg, #f8f9ff, #f0f4ff);
+  transition: all 0.3s ease;
+}
+
+.custom-table tr:last-child td {
+  border-bottom: none;
+}
+
+.badge-type {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 25px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  letter-spacing: 0.5px;
+}
+
+.btn-group .btn {
+  border-radius: 8px !important;
+  margin: 0 1px;
+}
+
+@media (max-width: 768px) {
+  .custom-table th,
+  .custom-table td {
+    padding: 12px 12px;
+    font-size: 0.9rem;
+  }
+  
+  .btn-group {
+    flex-direction: column;
+  }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Historique Sorties Stock{% endblock %}
+
+{% block content %}
+<div class="space-4">
+  <a href="{% url 'transfert_list' %}" class="btn">Historique Transferts</a>
+  <h1>Historique Transferts</h1>
+  <p class="text-muted">Traçabilité des sorties stock vers production</p>
+
+  <div class="table-container">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Date/Heure</th>
+        <th>Opérateur</th>
+        <th>Lot</th>
+        <th>Expiration</th>
+        <th>Quantité</th>
+        <th>Actions</th>
+      </tr>
+    <tbody>
+      {% for sortie in sorties %}
+      <tr>
+        <td>{{ sortie.date_heure|date:"d/m H:i" }}</td>
+        <td>{{ sortie.operateur }}</td>
+        <td>{{ sortie.numero_lot }}</td>
+        <td>
+          {% if sortie.expiration_info.date_expiration %}
+            <span class="badge bg-primary">{{ sortie.expiration_info.date_expiration|date:"d/m" }}</span>
+          {% else %}
+            <span class="badge bg-secondary">Inconnu</span>
+          {% endif %}
+        </td>
+        <td>{{ sortie.quantite|floatformat:2 }} kg</td>
+        <td>
+{% comment %}Actions buttons temporarily disabled - URL 'sortie_stock_update' not found{% endcomment %}
+                <span class="text-muted">Actions N/A</span>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" class="text-center py-5">
+          <i class="bi bi-arrow-repeat text-muted mb-3" style="font-size: 4rem; opacity: 0.5;"></i>
+          <h3 class="text-muted mb-2">Aucun transfert</h3>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

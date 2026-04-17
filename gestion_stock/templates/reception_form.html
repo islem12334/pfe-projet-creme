@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% block title %}Nouvelle Réception{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-hd">
+  <div>
+    <p class="page-hd-eyebrow">Magasin · Opérations</p>
+    <h1 class="page-hd-title">
+      <i class="bi bi-truck" style="color:var(--brand);"></i>
+      Nouvelle réception
+    </h1>
+    <p class="page-hd-sub">Enregistrement d'un arrivage fournisseur</p>
+  </div>
+  <div class="page-hd-actions">
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Dashboard
+    </a>
+  </div>
+</div>
+
+<div class="row g-4 justify-content-center">
+
+  <!-- Main Form -->
+  <div class="col-lg-8 col-xl-7">
+    <form method="post" novalidate id="receptionForm">
+      {% csrf_token %}
+
+      <div class="form-card">
+        <!-- Card Header -->
+        <div class="form-card-header magasin">
+          <div class="form-card-icon"><i class="bi bi-truck"></i></div>
+          <div>
+            <p class="form-card-title">Réception de stock</p>
+            <p class="form-card-sub">Remplissez les informations des lots reçus</p>
+          </div>
+        </div>
+
+        <div class="form-card-body">
+
+          <!-- Section 1: Lots -->
+          <div class="form-section">
+            <div class="form-section-label">
+              <i class="bi bi-layers"></i>
+              Configuration des lots
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label">Nombre de lots</label>
+              {{ form.nombre_lots }}
+              <p class="form-text">Sélectionnez 1 à 10 lots — les champs se génèrent automatiquement</p>
+              {% if form.nombre_lots.errors %}
+                <div class="alert alert-danger mt-2 py-2" style="font-size:12px;">{{ form.nombre_lots.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Dynamic lots container -->
+            <div id="lots-container"></div>
+          </div>
+
+          <!-- Section 2: Infos communes -->
+          <div class="form-section">
+            <div class="form-section-label">
+              <i class="bi bi-info-circle"></i>
+              Informations communes
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="bi bi-building me-1" style="color:var(--info);"></i>
+                  Fournisseur
+                </label>
+                {{ form.fournisseur }}
+                {% if form.fournisseur.errors %}
+                  <div style="color:var(--danger); font-size:12px; margin-top:4px;">{{ form.fournisseur.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="bi bi-calendar-x me-1" style="color:var(--warning);"></i>
+                  Date d'expiration
+                </label>
+                {{ form.date_expiration }}
+                {% if form.date_expiration.errors %}
+                  <div style="color:var(--danger); font-size:12px; margin-top:4px;">{{ form.date_expiration.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-12">
+                <label class="form-label">
+                  <i class="bi bi-box-seam me-1" style="color:var(--success);"></i>
+                  Quantité totale (kg)
+                </label>
+                <input type="number" id="quantite-total-display" class="form-control" style="background:#f8fafc; color:var(--brand); font-weight:700;" value="0.000" step="0.001" readonly>
+                <input type="hidden" name="quantite" id="quantite-hidden" value="0.000">
+                <p class="form-text">Calculée automatiquement · somme de tous les lots</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Récapitulatif -->
+          <div id="recap-section" style="display:none;">
+            <div class="form-section-label">
+              <i class="bi bi-clipboard-check" style="color:var(--success);"></i>
+              Récapitulatif avant enregistrement
+            </div>
+            <div class="data-card mb-3">
+              <table class="tbl" id="recap-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Code lot</th>
+                    <th>Quantité (kg)</th>
+                  </tr>
+                </thead>
+                <tbody id="recap-body"></tbody>
+                <tfoot>
+                  <tr style="background:#f0fdf4; border-top:2px solid #bbf7d0;">
+                    <td colspan="2" style="padding:10px 16px; font-weight:700; color:var(--success); font-size:13px; text-align:right;">Total</td>
+                    <td style="padding:10px 16px; font-weight:700; color:var(--success); font-size:14px;" id="recap-total">0.000 kg</td>
+                  </tr>
+                </tfoot>
+              </table>
+              <div style="padding:10px 16px; background:#f8fafc; border-top:1px solid var(--border); font-size:12px; color:var(--text-muted);" id="recap-info"></div>
+            </div>
+          </div>
+
+        </div><!-- /form-card-body -->
+
+        <!-- Form Footer -->
+        <div class="form-card-footer">
+          <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-x"></i> Annuler
+          </a>
+          <button type="submit" class="btn btn-success btn-lg" style="padding:10px 28px;">
+            <i class="bi bi-check-lg"></i> Enregistrer la réception
+          </button>
+        </div>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Help Sidebar -->
+  <div class="col-lg-4 col-xl-3">
+    <div class="help-card">
+      <div class="help-card-header">
+        <i class="bi bi-lightbulb" style="color:var(--warning);"></i>
+        Guide de saisie
+      </div>
+      <div class="help-card-body">
+        <ol class="help-steps">
+          <li>Choisissez le nombre de lots reçus</li>
+          <li>Saisissez le code et la quantité de chaque lot</li>
+          <li>Sélectionnez le fournisseur</li>
+          <li>Indiquez la date d'expiration</li>
+          <li>Vérifiez le récapitulatif et validez</li>
+        </ol>
+        <div style="background:var(--brand-light); border-radius:var(--r-md); padding:12px; border:1px solid #dbeafe;">
+          <div style="font-size:12px; font-weight:600; color:var(--brand); margin-bottom:4px;">
+            <i class="bi bi-info-circle me-1"></i> À savoir
+          </div>
+          <p style="font-size:12px; color:var(--text-secondary); margin:0;">
+            Le stock est mis à jour automatiquement après enregistrement.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const nombreLots = document.querySelector('[name="nombre_lots"]');
+  const container = document.getElementById('lots-container');
+
+  function updateTotal() {
+    let total = 0;
+    document.querySelectorAll('.lot-quantite').forEach(input => {
+      total += parseFloat(input.value) || 0;
+    });
+    const rounded = total.toFixed(3);
+    document.getElementById('quantite-total-display').value = rounded;
+    document.getElementById('quantite-hidden').value = rounded;
+    updateRecap();
+  }
+
+  function updateRecap() {
+    const rows = container.querySelectorAll('.lot-row-item');
+    const recapBody = document.getElementById('recap-body');
+    const recapSection = document.getElementById('recap-section');
+    const recapInfo = document.getElementById('recap-info');
+
+    let total = 0;
+    let html = '';
+    let hasData = false;
+
+    rows.forEach((row, idx) => {
+      const code = row.querySelector('.lot-code-input').value.trim();
+      const qte = parseFloat(row.querySelector('.lot-quantite').value) || 0;
+      total += qte;
+      if (code || qte > 0) hasData = true;
+      html += `<tr>
+        <td><span class="tbl-id">${idx + 1}</span></td>
+        <td>${code ? `<span class="tbl-lot">${code}</span>` : '<span style="color:var(--text-muted);">—</span>'}</td>
+        <td><span class="tbl-qty" style="color:var(--brand);">${qte > 0 ? qte.toFixed(3) + ' kg' : '<span style="color:var(--text-muted);">—</span>'}</span></td>
+      </tr>`;
+    });
+
+    recapBody.innerHTML = html;
+    document.getElementById('recap-total').textContent = total.toFixed(3) + ' kg';
+
+    const fournisseur = document.querySelector('[name="fournisseur"] option:checked')?.text || '—';
+    const dateExp = document.querySelector('[name="date_expiration"]')?.value || '—';
+    recapInfo.innerHTML = `<i class="bi bi-building me-1"></i><strong>Fournisseur :</strong> ${fournisseur} &nbsp;·&nbsp; <i class="bi bi-calendar me-1"></i><strong>Expiration :</strong> ${dateExp}`;
+
+    recapSection.style.display = hasData ? 'block' : 'none';
+  }
+
+  function renderLots(numLots) {
+    container.innerHTML = '';
+    for (let i = 1; i <= numLots && i <= 10; i++) {
+      const div = document.createElement('div');
+      div.className = 'lot-row-card lot-row-item';
+      div.innerHTML = `
+        <div class="lot-num-badge">${i}</div>
+        <div style="flex:1; min-width:0;">
+          <label class="form-label" style="margin-bottom:4px;">Code lot ${i}</label>
+          <input type="text" name="lot_code${i}" class="form-control lot-code-input" placeholder="LOT-XXX-${i}">
+        </div>
+        <div style="width:190px; flex-shrink:0;">
+          <label class="form-label" style="margin-bottom:4px;">
+            Quantité (kg)
+            <span style="font-size:10px; color:var(--text-muted); font-weight:400; text-transform:none;">(ce lot)</span>
+          </label>
+          <input type="number" name="lot_quantite${i}" class="form-control lot-quantite"
+                 min="0.001" step="0.001" placeholder="0.000" required>
+        </div>
+      `;
+      container.appendChild(div);
+    }
+    container.querySelectorAll('.lot-quantite, .lot-code-input').forEach(input => {
+      input.addEventListener('input', updateTotal);
+    });
+    document.querySelector('[name="fournisseur"]')?.addEventListener('change', updateRecap);
+    document.querySelector('[name="date_expiration"]')?.addEventListener('change', updateRecap);
+    updateTotal();
+  }
+
+  if (nombreLots) {
+    nombreLots.addEventListener('change', function() {
+      renderLots(parseInt(this.value) || 0);
+    });
+    renderLots(parseInt(nombreLots.value) || 1);
+  }
+});
+</script>
+{% endblock %}

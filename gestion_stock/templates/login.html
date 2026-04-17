@@ -1,0 +1,511 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion — Gestion Crème</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f172a;
+      -webkit-font-smoothing: antialiased;
+      padding: 24px;
+    }
+
+    /* ── Background glow ───────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(37,99,235,.15) 0%, transparent 65%);
+      top: -150px; left: -150px;
+      pointer-events: none;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(99,102,241,.10) 0%, transparent 65%);
+      bottom: -120px; right: -120px;
+      pointer-events: none;
+    }
+
+    /* ── Container ─────────────────────────────────── */
+    .container {
+      width: 100%;
+      max-width: 900px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 32px 80px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.05);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ══════════════════════════════════════════
+       LEFT PANEL
+    ══════════════════════════════════════════ */
+    .left {
+      background: linear-gradient(160deg, #1e3a8a 0%, #1e40af 40%, #2563eb 100%);
+      padding: 52px 44px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      min-height: 560px;
+    }
+
+    /* Dot pattern */
+    .left::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,.08) 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+    }
+
+    /* Circle decorations */
+    .left::after {
+      content: '';
+      position: absolute;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.10);
+      bottom: -80px; right: -80px;
+      pointer-events: none;
+    }
+
+    .circle-deco {
+      position: absolute;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.07);
+      bottom: 10px; right: 50px;
+      pointer-events: none;
+    }
+
+    .left > * { position: relative; z-index: 1; }
+
+    /* Brand */
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 42px; height: 42px;
+      border-radius: 10px;
+      object-fit: cover;
+      box-shadow: 0 4px 14px rgba(0,0,0,.25);
+    }
+    .brand-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .brand-tagline {
+      font-size: 10px;
+      font-weight: 500;
+      color: rgba(255,255,255,.45);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      margin-top: 2px;
+    }
+
+    /* Center text */
+    .left-body { }
+
+    .left-label {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: rgba(255,255,255,.55);
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 20px;
+      padding: 5px 14px;
+      margin-bottom: 24px;
+    }
+
+    .left-title {
+      font-size: 34px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.2;
+      letter-spacing: -1px;
+      margin-bottom: 16px;
+    }
+
+    .left-desc {
+      font-size: 14px;
+      color: rgba(255,255,255,.55);
+      line-height: 1.7;
+      max-width: 280px;
+    }
+
+    /* Roles chips */
+    .roles-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .role-chip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+    }
+
+    .role-dot-wrap {
+      width: 36px; height: 36px;
+      border-radius: 9px;
+      background: rgba(255,255,255,.12);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .role-chip-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .role-chip-desc {
+      font-size: 11px;
+      color: rgba(255,255,255,.45);
+      margin-top: 1px;
+    }
+
+    /* ══════════════════════════════════════════
+       RIGHT PANEL
+    ══════════════════════════════════════════ */
+    .right {
+      background: #ffffff;
+      padding: 52px 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* Heading */
+    .f-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: #2563eb;
+      margin-bottom: 8px;
+    }
+
+    .f-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -.5px;
+      margin-bottom: 6px;
+    }
+
+    .f-sub {
+      font-size: 13.5px;
+      color: #64748b;
+      margin-bottom: 30px;
+      font-weight: 400;
+    }
+
+    /* Error */
+    .f-error {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 11px 14px;
+      background: #fff1f2;
+      border: 1px solid #fecdd3;
+      border-radius: 9px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #be123c;
+      animation: shk .35s ease;
+    }
+    @keyframes shk {
+      0%,100% { transform: translateX(0); }
+      25%      { transform: translateX(-5px); }
+      75%      { transform: translateX(5px); }
+    }
+    .f-error i { font-size: 15px; flex-shrink: 0; }
+
+    /* Field */
+    .f-field { margin-bottom: 16px; }
+
+    .f-label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: #374151;
+      margin-bottom: 7px;
+    }
+
+    .f-inp-wrap { position: relative; }
+
+    .f-inp {
+      width: 100%;
+      height: 46px;
+      padding: 0 14px 0 42px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #f8fafc;
+      color: #0f172a;
+      outline: none;
+      transition: border-color .18s, box-shadow .18s, background .18s;
+    }
+    .f-inp::placeholder { color: #cbd5e1; }
+    .f-inp:focus {
+      border-color: #2563eb;
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(37,99,235,.09);
+    }
+
+    .ico-l {
+      position: absolute;
+      left: 14px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      color: #94a3b8;
+      pointer-events: none;
+      transition: color .18s;
+    }
+    .f-inp-wrap:focus-within .ico-l { color: #2563eb; }
+
+    .ico-r {
+      position: absolute;
+      right: 13px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 15px;
+      color: #94a3b8;
+      background: none; border: none;
+      cursor: pointer; padding: 4px;
+      transition: color .18s; line-height: 1;
+    }
+    .ico-r:hover { color: #475569; }
+
+    /* Remember */
+    .f-opts {
+      margin: 18px 0 22px;
+    }
+    .f-check {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: #475569;
+      cursor: pointer; user-select: none;
+    }
+    .f-check input {
+      width: 15px; height: 15px;
+      accent-color: #2563eb; cursor: pointer;
+    }
+
+    /* Divider */
+    .f-divider {
+      display: flex; align-items: center; gap: 10px;
+      margin: 22px 0 18px;
+    }
+    .f-divider-line { flex: 1; height: 1px; background: #f1f5f9; }
+    .f-divider-txt  {
+      font-size: 10.5px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .5px;
+      color: #cbd5e1;
+    }
+
+    /* Submit */
+    .f-btn {
+      width: 100%; height: 48px;
+      border: none; border-radius: 10px;
+      background: #2563eb; color: #fff;
+      font-size: 14px; font-weight: 600;
+      font-family: inherit; cursor: pointer;
+      display: flex; align-items: center;
+      justify-content: center; gap: 8px;
+      letter-spacing: .1px;
+      transition: background .18s, box-shadow .18s, transform .12s;
+      box-shadow: 0 4px 14px rgba(37,99,235,.28);
+    }
+    .f-btn:hover {
+      background: #1d4ed8;
+      box-shadow: 0 6px 20px rgba(37,99,235,.36);
+      transform: translateY(-1px);
+    }
+    .f-btn:active { transform: translateY(0); }
+
+    /* Security */
+    .f-sec {
+      display: flex; align-items: center;
+      justify-content: center; gap: 6px;
+      margin-top: 20px;
+      font-size: 12px; color: #94a3b8;
+    }
+    .f-sec i { color: #22c55e; font-size: 13px; }
+
+    /* Responsive */
+    @media (max-width: 720px) {
+      .container { grid-template-columns: 1fr; max-width: 420px; }
+      .left      { display: none; }
+      .right     { padding: 40px 28px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ═══ LEFT ═══════════════════════════════════════════════ -->
+  <div class="left">
+    <div class="circle-deco"></div>
+
+    <!-- Brand -->
+    <div class="brand">
+      <img src="{% static 'images/logo.png' %}" class="brand-logo" alt="Logo">
+      <div>
+        <div class="brand-name">Gestion Crème</div>
+        <div class="brand-tagline">Système Industriel</div>
+      </div>
+    </div>
+
+    <!-- Center -->
+    <div class="left-body">
+      <span class="left-label">Accès sécurisé</span>
+      <h2 class="left-title">Bienvenue sur<br>votre espace</h2>
+      <p class="left-desc">Gérez votre stock, vos réceptions et votre production depuis une seule plateforme.</p>
+    </div>
+
+    <!-- Roles -->
+    <div class="roles-wrap">
+      <div class="role-chip">
+        <div class="role-dot-wrap"><i class="bi bi-building"></i></div>
+        <div>
+          <div class="role-chip-name">Interface Magasin</div>
+          <div class="role-chip-desc">Réceptions · Transferts · Stock</div>
+        </div>
+      </div>
+      <div class="role-chip">
+        <div class="role-dot-wrap"><i class="bi bi-gear-wide-connected"></i></div>
+        <div>
+          <div class="role-chip-name">Interface Production</div>
+          <div class="role-chip-desc">Consommation · Historique · Stats</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ RIGHT ══════════════════════════════════════════════ -->
+  <div class="right">
+
+    <p class="f-eyebrow">Connexion</p>
+    <h1 class="f-title">Accédez à votre espace</h1>
+    <p class="f-sub">Entrez vos identifiants ci-dessous</p>
+
+    {% if form.errors %}
+    <div class="f-error">
+      <i class="bi bi-exclamation-circle-fill"></i>
+      Matricule ou mot de passe incorrect.
+    </div>
+    {% endif %}
+
+    <form method="POST" autocomplete="off">
+      {% csrf_token %}
+      {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+      <!-- Matricule -->
+      <div class="f-field">
+        <label class="f-label" for="id_username">Matricule</label>
+        <div class="f-inp-wrap">
+          <input
+            type="text" id="id_username" name="username"
+            class="f-inp" placeholder="Entrez votre matricule"
+            required autocomplete="username"
+            value="{{ form.username.value|default:'' }}"
+          >
+          <i class="bi bi-person ico-l"></i>
+        </div>
+      </div>
+
+      <!-- Mot de passe -->
+      <div class="f-field">
+        <label class="f-label" for="id_password">Mot de passe</label>
+        <div class="f-inp-wrap">
+          <input
+            type="password" id="id_password" name="password"
+            class="f-inp" placeholder="Entrez votre mot de passe"
+            required autocomplete="current-password"
+          >
+          <i class="bi bi-lock ico-l"></i>
+          <button type="button" class="ico-r" onclick="togglePwd()">
+            <i class="bi bi-eye" id="eyeIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Options -->
+      <div class="f-opts">
+        <label class="f-check">
+          <input type="checkbox" name="remember_me">
+          Se souvenir de moi
+        </label>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" class="f-btn">
+        <i class="bi bi-box-arrow-in-right"></i>
+        Se connecter
+      </button>
+
+    </form>
+
+    <div class="f-sec">
+      <i class="bi bi-shield-fill-check"></i>
+      Connexion sécurisée et chiffrée
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  function togglePwd() {
+    const inp  = document.getElementById('id_password');
+    const icon = document.getElementById('eyeIcon');
+    if (inp.type === 'password') {
+      inp.type = 'text';
+      icon.className = 'bi bi-eye-slash';
+    } else {
+      inp.type = 'password';
+      icon.className = 'bi bi-eye';
+    }
+  }
+</script>
+
+</body>
+</html>

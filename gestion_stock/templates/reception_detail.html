@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Détail Réception #{{ reception.id }}{% endblock %}
+
+{% block content %}
+<div class="space-5">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <div>
+      <h1><i class="bi bi-receipt text-info me-2"></i>Détail Réception #{{ reception.id }}</h1>
+      <p class="text-muted mb-0">{{ reception.lot_reference }}</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button onclick="window.print()" class="btn btn-outline-secondary">
+        <i class="bi bi-printer me-1"></i>Imprimer
+      </button>
+      {% if request.user.profile.type_operateur == 'admin' %}
+      <a href="{% url 'reception_update' reception.id %}" class="btn btn-warning">
+        <i class="bi bi-pencil"></i> Modifier
+      </a>
+      <a href="{% url 'reception_delete' reception.id %}" class="btn btn-danger">
+        <i class="bi bi-trash"></i> Supprimer
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Fiche imprimable -->
+  <div class="card border-0 shadow">
+    <div class="card-header bg-info text-white text-center py-3">
+      <h4 class="mb-0 fw-bold">Fiche de Réception</h4>
+      <small>Réception N° {{ reception.id }} — {{ reception.date_reception|date:"d/m/Y H:i" }}</small>
+    </div>
+
+    <div class="card-body p-4">
+
+      <!-- Infos générales -->
+      <div class="row g-4 mb-4">
+        <div class="col-md-3">
+          <div class="border rounded p-3 h-100">
+            <h6 class="text-muted text-uppercase mb-2"><i class="bi bi-person-badge me-1"></i>Opérateur</h6>
+            <div class="fw-bold">{{ reception.profile.nom }} {{ reception.profile.prenom }}</div>
+            <code>{{ reception.profile.matricule }}</code>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="border rounded p-3 h-100">
+            <h6 class="text-muted text-uppercase mb-2"><i class="bi bi-building me-1"></i>Fournisseur</h6>
+            <div class="fw-bold">{{ reception.fournisseur.nom }}</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="border rounded p-3 h-100">
+            <h6 class="text-muted text-uppercase mb-2"><i class="bi bi-calendar-event me-1"></i>Date réception</h6>
+            <div class="fw-bold">{{ reception.date_reception|date:"d/m/Y" }}</div>
+            <small class="text-muted">{{ reception.date_reception|date:"H:i" }}</small>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="border rounded p-3 h-100">
+            <h6 class="text-muted text-uppercase mb-2"><i class="bi bi-hourglass-split me-1"></i>Expiration</h6>
+            <div class="fw-bold">{{ reception.date_expiration|date:"d/m/Y" }}</div>
+            <div class="fw-bold text-success mt-1">{{ reception.quantite|floatformat:3 }} kg</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tableau lots -->
+      <h6 class="text-muted text-uppercase mb-3"><i class="bi bi-upc-scan me-1"></i>Lots réceptionnés</h6>
+      <table class="table table-bordered">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>ID Canonique</th>
+            <th>Code Lot réel</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lot in lots %}
+          <tr>
+            <td><span class="badge bg-secondary">{{ lot.index }}</span></td>
+            <td><code>{{ lot.canonical }}</code></td>
+            <td><strong>{{ lot.code }}</strong></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" class="text-center text-muted py-3">Aucun lot saisi</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Signatures impression -->
+      <div class="row g-4 mt-3 print-only">
+        <div class="col-md-6 text-center">
+          <div class="border-top pt-3 mt-5">Signature Opérateur</div>
+        </div>
+        <div class="col-md-6 text-center">
+          <div class="border-top pt-3 mt-5">Signature Responsable</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 no-print">
+    <a href="{% url 'reception_list' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Retour
+    </a>
+  </div>
+</div>
+
+<style>
+.print-only { display: none; }
+.ticket-preview { display: none; }
+
+@media print {
+  body * { visibility: hidden; }
+  .ticket-preview, .ticket-preview * { visibility: visible; }
+  .ticket-preview {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin: 0;
+    padding: 0;
+  }
+  .ticket {
+    width: 5.2cm;
+    height: 2.6cm;
+    border: 1px solid #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    page-break-after: always;
+    padding: 0.2cm;
+    text-align: center;
+    box-sizing: border-box;
+  }
+  .ticket:last-child {
+    page-break-after: avoid;
+  }
+  .ticket-id {
+    font-size: 12pt;
+    font-weight: bold;
+    font-family: monospace;
+    letter-spacing: 1px;
+  }
+  .ticket-code {
+    font-size: 10pt;
+    font-weight: bold;
+    font-family: monospace;
+    margin-top: 4px;
+  }
+}
+</style>
+
+<!-- Tickets pour impression uniquement -->
+<div class="ticket-preview">
+  {% for lot in lots %}
+  <div class="ticket">
+    <div class="ticket-id">{{ lot.canonical }}</div>
+    <div class="ticket-code">{{ lot.code }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

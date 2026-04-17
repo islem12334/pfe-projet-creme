@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}Stock Actuel{% endblock %}
+
+{% block content %}
+<div class="space-5">
+  <!-- Header -->
+  <div class="glass-card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+      <div>
+        <h1 class="h2 mb-1">
+          <i class="bi bi-boxes text-success me-2"></i>
+          Stock Actuel
+        </h1>
+        <p class="text-muted">Inventaire en temps réel et état des péremptions</p>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left"></i> Dashboard
+        </a>
+        <a href="{% url 'reception_new' %}" class="btn btn-success">
+          <i class="bi bi-plus-circle"></i> Nouvelle réception
+        </a>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="search-container">
+          <i class="bi bi-search search-icon"></i>
+          <input type="text" class="form-control search-input" placeholder="Rechercher lot ou fournisseur...">
+        </div>
+      </div>
+      <div class="col-md-3">
+        <select class="form-select">
+          <option>Tous statuts</option>
+          <option>Expiré</option>
+          <option>Avertissement</option>
+          <option>OK</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-outline-primary w-100">
+          <i class="bi bi-funnel"></i> Filtrer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Total Stock -->
+  {% if total_stock is not None %}
+  <div class="kpi-card glass-card text-center py-5 px-4 h-100 mb-5" style="max-width: 400px;">
+    <i class="bi bi-archive-fill text-success mb-4" style="font-size: 4rem;"></i>
+    <div class="display-3 fw-bold text-success mb-2">{{ total_stock|floatformat:1 }}</div>
+    <div class="h4 text-muted mb-3">Total en stock</div>
+    <div class="badge bg-success fs-5 px-4 py-3">kg disponibles</div>
+  </div>
+  {% endif %}
+
+  <!-- Stock Table -->
+  <div class="glass-card">
+    <div class="p-4 border-bottom">
+      <h5 class="mb-0 d-flex align-items-center">
+        <i class="bi bi-list-ul me-2 text-primary"></i>
+        Détail des lots en stock ({{ receptions|length }})
+      </h5>
+    </div>
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead class="table-light sticky-top">
+          <tr>
+            <th>ID</th>
+            <th>Lot</th>
+            <th>Fournisseur</th>
+            <th>Expiration</th>
+            <th>Quantité</th>
+            <th>Statut</th>
+          </tr>
+          <tbody>
+            {% for r in receptions %}
+            <tr>
+              <td>
+                <span class="badge bg-secondary">{{ r.id }}</span>
+              </td>
+              <td>{{ r.lot_reference|default:r.id }}</td>
+              <td>{{ r.fournisseur|truncatechars:20 }}</td>
+              <td>
+                {% if r.date_expiration %}
+                  <span class="badge 
+                    {% if r.status == 'expired' %}bg-danger
+                    {% elif r.status == 'warning' %}bg-warning text-dark
+                    {% else %}bg-success{% endif %}">
+                    {{ r.date_expiration|date:"d/m/Y" }}
+                  </span>
+                {% else %}
+                  <span class="badge bg-secondary">N/A</span>
+                {% endif %}
+              </td>
+              <td>
+                <strong>{{ r.quantite|floatformat:3 }} kg</strong>
+              </td>
+              <td>
+                <span class="badge fs-6 px-3 py-2 
+                  {% if r.status == 'expired' %}bg-danger
+                  {% elif r.status == 'warning' %}bg-warning text-dark
+                  {% else %}bg-success{% endif %}">
+                  {{ r.status|title }}
+                </span>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center py-5 bg-light">
+                <i class="bi bi-inbox text-muted mb-3" style="font-size: 4rem; opacity: 0.5;"></i>
+                <h4 class="text-muted mb-1">Aucun lot en stock</h4>
+                <p class="text-muted mb-0">Commencez par une nouvelle réception</p>
+                <a href="{% url 'reception_new' %}" class="btn btn-primary mt-3">+ Première réception</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

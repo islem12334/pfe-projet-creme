@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Historique Réceptions{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-hd">
+  <div>
+    <p class="page-hd-eyebrow">Magasin · Historique</p>
+    <h1 class="page-hd-title">
+      <i class="bi bi-truck" style="color: var(--brand);"></i>
+      Réceptions
+      <span class="count-pill">{{ receptions|length }}</span>
+    </h1>
+    <p class="page-hd-sub">Liste des arrivages et lots réceptionnés</p>
+  </div>
+  <div class="page-hd-actions">
+    <a href="{% url 'reception_new' %}" class="btn btn-primary">
+      <i class="bi bi-plus-circle"></i> Nouvelle réception
+    </a>
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Dashboard
+    </a>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+  <div class="search-container">
+    <i class="bi bi-search search-icon"></i>
+    <input type="text" id="searchInput" class="form-control search-input" placeholder="Rechercher lot, fournisseur, opérateur…">
+  </div>
+  <select class="form-select" id="statusFilter" style="width:auto; height:36px; font-size:13px;">
+    <option value="">Tous les statuts</option>
+    <option value="expired">Expiré</option>
+    <option value="today">Aujourd'hui</option>
+  </select>
+  <button class="btn btn-outline-primary btn-sm" onclick="filterTable()">
+    <i class="bi bi-funnel"></i> Filtrer
+  </button>
+</div>
+
+<!-- Table -->
+<div class="data-card">
+  <div class="data-card-header">
+    <span class="data-card-title">
+      <i class="bi bi-table" style="color:var(--text-muted);"></i>
+      Tous les arrivages
+    </span>
+  </div>
+
+  <table class="tbl" id="receptionsTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Référence lot</th>
+        <th>Opérateur</th>
+        <th>Fournisseur</th>
+        <th>Date réception</th>
+        <th>Quantité</th>
+        <th>Expiration</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for reception in receptions %}
+      <tr>
+        <td><span class="tbl-id">#{{ reception.id }}</span></td>
+        <td><span class="tbl-lot">{{ reception.lot_reference }}</span></td>
+        <td>
+          <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">
+            {{ reception.profile.matricule }}
+          </span>
+        </td>
+        <td style="color:var(--text-secondary);">{{ reception.fournisseur.nom|truncatechars:22 }}</td>
+        <td style="color:var(--text-muted); font-size:12px;">{{ reception.date_reception|date:"d/m/Y H:i" }}</td>
+        <td>
+          <span class="tbl-qty" style="color:var(--brand);">{{ reception.quantite|floatformat:3 }} <small style="font-weight:400; color:var(--text-muted);">kg</small></span>
+        </td>
+        <td>{{ reception.date_expiration|date:"d/m/Y" }}</td>
+        <td>
+          <div class="tbl-actions">
+            <a href="{% url 'reception_detail' reception.id %}" class="btn-icon btn-icon-info" title="Détails">
+              <i class="bi bi-eye"></i>
+            </a>
+            {% if request.user.profile.type_operateur == 'admin' %}
+            <a href="{% url 'reception_update' reception.id %}" class="btn-icon btn-icon-warning" title="Modifier">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="{% url 'reception_delete' reception.id %}" class="btn-icon btn-icon-danger" title="Supprimer">
+              <i class="bi bi-trash"></i>
+            </a>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="8">
+          <div class="empty-state">
+            <i class="bi bi-truck empty-state-icon"></i>
+            <p class="empty-state-title">Aucune réception enregistrée</p>
+            <p class="empty-state-sub">Commencez par enregistrer votre premier arrivage</p>
+            <a href="{% url 'reception_new' %}" class="btn btn-primary">
+              <i class="bi bi-plus-circle"></i> Nouvelle réception
+            </a>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+function filterTable() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const rows = document.querySelectorAll('#receptionsTable tbody tr');
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = (!q || text.includes(q)) ? '' : 'none';
+  });
+}
+document.getElementById('searchInput').addEventListener('input', filterTable);
+</script>
+{% endblock %}

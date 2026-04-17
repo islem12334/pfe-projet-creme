@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Détail Consommation #{{ ouverture.pk }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="mb-1"><i class="bi bi-eye text-info me-2"></i>Détail Consommation #{{ ouverture.pk }}</h1>
+    <p class="text-muted mb-0">{{ ouverture.date_heure_ouverture|date:"d/m/Y H:i" }}</p>
+  </div>
+  <div class="d-flex gap-2">
+    {% if request.user.profile.type_operateur == 'admin' %}
+    <a href="{% url 'production:ouverture_update' ouverture.pk %}" class="btn btn-warning">
+      <i class="bi bi-pencil"></i> Modifier
+    </a>
+    <a href="{% url 'production:ouverture_delete' ouverture.pk %}" class="btn btn-danger">
+      <i class="bi bi-trash"></i> Supprimer
+    </a>
+    {% endif %}
+    <a href="{% url 'production:historique' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Retour
+    </a>
+  </div>
+</div>
+
+<div class="card border-0 shadow">
+  <div class="card-header bg-info text-white text-center py-3">
+    <h5 class="mb-0 fw-bold">Fiche de Consommation Production</h5>
+    <small>N° {{ ouverture.pk }} — {{ ouverture.date_heure_ouverture|date:"d/m/Y H:i" }}</small>
+  </div>
+  <div class="card-body p-4">
+    <div class="row g-4">
+
+      <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+          <h6 class="text-muted text-uppercase mb-2"><i class="bi bi-person-badge me-1"></i>Opérateur</h6>
+          <div class="fw-bold">{{ ouverture.profile.nom }} {{ ouverture.profile.prenom }}</div>
+          <code>{{ ouverture.profile.matricule }}</code>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+          <h6 class="text-muted text-uppercase mb-2"><i class="bi bi-diagram-3 me-1"></i>Ligne / Shift</h6>
+          <div class="fw-bold">{{ ouverture.ligne_production }}</div>
+          <span class="badge bg-secondary mt-1">Shift {{ ouverture.shift }}</span>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+          <h6 class="text-muted text-uppercase mb-2"><i class="bi bi-calendar-event me-1"></i>Date / Heure</h6>
+          <div class="fw-bold">{{ ouverture.date_heure_ouverture|date:"d/m/Y" }}</div>
+          <small class="text-muted">{{ ouverture.date_heure_ouverture|date:"H:i" }}</small>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+          <h6 class="text-muted text-uppercase mb-2"><i class="bi bi-upc-scan me-1"></i>Lot consommé</h6>
+          <code class="fs-6">{{ ouverture.numero_lot }}</code>
+          <div class="mt-1">
+            {% if ouverture.expiration_info.status == 'expired' %}
+              <span class="badge bg-danger">Expiré</span>
+            {% elif ouverture.expiration_info.status == 'warning' %}
+              <span class="badge bg-warning text-dark">≤ 7 jours</span>
+            {% else %}
+              <span class="badge bg-success">OK</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+          <h6 class="text-muted text-uppercase mb-2"><i class="bi bi-hash me-1"></i>Ordre Fabrication</h6>
+          <div class="fw-bold">{{ ouverture.numero_ordre_fabrication }}</div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+          <h6 class="text-muted text-uppercase mb-2"><i class="bi bi-box-seam me-1"></i>Produit</h6>
+          <div class="fw-bold">{{ ouverture.nom_produit }}</div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="border rounded p-3 h-100 border-warning">
+          <h6 class="text-muted text-uppercase mb-2"><i class="bi bi-speedometer2 me-1"></i>Quantité consommée</h6>
+          <div class="fw-bold text-warning fs-4">{{ ouverture.quantite|floatformat:0 }} pcs</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

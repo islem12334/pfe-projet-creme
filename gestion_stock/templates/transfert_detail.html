@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Détail Transfert #{{ sortie.id }}{% endblock %}
+
+{% block content %}
+<div class="space-5">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <div>
+      <h1><i class="bi bi-arrow-left-right text-warning me-2"></i>Détail Transfert #{{ sortie.id }}</h1>
+      <p class="text-muted mb-0">Fiche de transfert vers production</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button onclick="window.print()" class="btn btn-outline-secondary">
+        <i class="bi bi-printer me-1"></i>Imprimer
+      </button>
+      {% if request.user.profile.type_operateur == 'admin' %}
+      <a href="{% url 'transfert_update' sortie.id %}" class="btn btn-warning">
+        <i class="bi bi-pencil"></i> Modifier
+      </a>
+      <a href="{% url 'transfert_delete' sortie.id %}" class="btn btn-danger">
+        <i class="bi bi-trash"></i> Supprimer
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Fiche imprimable -->
+  <div class="card border-0 shadow" id="print-area">
+    <div class="card-header bg-warning text-dark text-center py-3">
+      <h4 class="mb-0 fw-bold">Bon de Transfert vers Production</h4>
+      <small>Transfert N° {{ sortie.id }} — {{ sortie.date_heure|date:"d/m/Y H:i" }}</small>
+    </div>
+
+    <div class="card-body p-4">
+      <div class="row g-4 mb-4">
+        <div class="col-md-6">
+          <div class="border rounded p-3 h-100">
+            <h6 class="text-muted text-uppercase mb-2"><i class="bi bi-person-badge me-1"></i>Opérateur</h6>
+            <div class="fw-bold fs-5">{{ sortie.profile.nom }} {{ sortie.profile.prenom }}</div>
+            <code>{{ sortie.profile.matricule }}</code>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="border rounded p-3 h-100">
+            <h6 class="text-muted text-uppercase mb-2"><i class="bi bi-calendar-event me-1"></i>Date / Heure</h6>
+            <div class="fw-bold fs-5">{{ sortie.date_heure|date:"d/m/Y" }}</div>
+            <small class="text-muted">{{ sortie.date_heure|date:"H:i" }}</small>
+          </div>
+        </div>
+      </div>
+
+      <h6 class="text-muted text-uppercase mb-3"><i class="bi bi-upc-scan me-1"></i>Détail du lot transféré</h6>
+      <table class="table table-bordered mb-4">
+        <thead class="table-light">
+          <tr>
+            <th>ID Canonique</th>
+            <th>Code Lot réel</th>
+            <th>Fournisseur</th>
+            <th>Date expiration</th>
+            <th>Statut</th>
+            <th>Quantité transférée</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code class="fs-6">{{ sortie.numero_lot }}</code></td>
+            <td><strong>{{ lot_code_reel }}</strong></td>
+            <td>{{ reception.fournisseur.nom|default:"—" }}</td>
+            <td>
+              {% if expiration_info.date_expiration %}
+                {{ expiration_info.date_expiration|date:"d/m/Y" }}
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if expiration_info.status == 'expired' %}
+                <span class="badge bg-danger">Expiré</span>
+              {% elif expiration_info.status == 'warning' %}
+                <span class="badge bg-warning text-dark">≤ 7 jours</span>
+              {% else %}
+                <span class="badge bg-success">OK</span>
+              {% endif %}
+            </td>
+            <td class="fw-bold text-warning fs-5">{{ sortie.quantite|floatformat:3 }} kg</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Signatures (impression seulement) -->
+      <div class="row g-4 mt-3 print-only">
+        <div class="col-md-6 text-center">
+          <div class="border-top pt-3 mt-5">Signature Opérateur</div>
+        </div>
+        <div class="col-md-6 text-center">
+          <div class="border-top pt-3 mt-5">Signature Responsable</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 no-print">
+    <a href="{% url 'transfert_list' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Retour
+    </a>
+  </div>
+</div>
+
+<style>
+.print-only { display: none; }
+@media print {
+  .no-print { display: none !important; }
+  .print-only { display: flex !important; }
+  .sidebar, nav, .topbar { display: none !important; }
+  body { background: white; }
+  .card { box-shadow: none !important; border: 1px solid #ccc !important; }
+}
+</style>
+{% endblock %}

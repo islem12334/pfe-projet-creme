@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Stock Actuel{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-hd">
+  <div>
+    {% if request.resolver_match and request.resolver_match.namespace == 'production' %}
+    <p class="page-hd-eyebrow">Production · Inventaire</p>
+    {% else %}
+    <p class="page-hd-eyebrow">Magasin · Inventaire</p>
+    {% endif %}
+    <h1 class="page-hd-title">
+      <i class="bi bi-boxes" style="color:var(--success);"></i>
+      Stock Actuel
+    </h1>
+    <p class="page-hd-sub">État des quantités disponibles et péremptions</p>
+  </div>
+  <div class="page-hd-actions">
+    {% if request.resolver_match and request.resolver_match.namespace == 'production' %}
+    <a href="{% url 'production:data_performance' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Dashboard
+    </a>
+    {% else %}
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Dashboard
+    </a>
+    <a href="{% url 'reception_new' %}" class="btn btn-primary">
+      <i class="bi bi-plus-circle"></i> Nouvelle réception
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+{% if total_stock %}
+<!-- KPI Total -->
+<div class="row g-3 mb-4">
+  <div class="col-auto">
+    <div class="data-card" style="padding:16px 24px; display:inline-flex; align-items:center; gap:14px;">
+      <div style="width:42px; height:42px; border-radius:var(--r-md); background:#dcfce7; display:flex; align-items:center; justify-content:center;">
+        <i class="bi bi-archive-fill" style="font-size:18px; color:#15803d;"></i>
+      </div>
+      <div>
+        <div style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--text-muted); margin-bottom:2px;">Total en stock</div>
+        <div style="font-size:22px; font-weight:700; color:#15803d; line-height:1.1;">{{ total_stock|floatformat:1 }} <span style="font-size:13px; font-weight:500; color:var(--text-muted);">kg disponibles</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Stock Table -->
+<div class="data-card">
+  <div class="data-card-header">
+    <span class="data-card-title">
+      <i class="bi bi-list-ul" style="color:var(--text-muted);"></i>
+      Détail des lots en stock ({{ receptions|length }})
+    </span>
+  </div>
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Lot</th>
+        <th>Fournisseur</th>
+        <th>Expiration</th>
+        <th>Quantité</th>
+        <th>Statut</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in receptions %}
+      <tr>
+        <td><span class="tbl-id">#{{ r.id }}</span></td>
+        <td><span class="tbl-lot">{{ r.lot_reference|default:r.id }}</span></td>
+        <td style="color:var(--text-secondary);">{{ r.fournisseur|truncatechars:25 }}</td>
+        <td>
+          {% if r.date_expiration %}
+          <span class="badge {% if r.status == 'expired' %}status-error{% elif r.status == 'warning' %}status-warn{% else %}status-ok{% endif %}">
+            {{ r.date_expiration|date:"d/m/Y" }}
+          </span>
+          {% else %}
+          <span style="color:var(--text-muted);">—</span>
+          {% endif %}
+        </td>
+        <td>
+          <span class="tbl-qty" style="color:{% if r.status == 'expired' %}var(--danger){% elif r.status == 'warning' %}var(--warning){% else %}var(--success){% endif %};">
+            {{ r.quantite|floatformat:3 }} <small style="font-weight:400; color:var(--text-muted);">kg</small>
+          </span>
+        </td>
+        <td>
+          <span class="badge {% if r.status == 'expired' %}status-error{% elif r.status == 'warning' %}status-warn{% else %}status-ok{% endif %}">
+            {% if r.status == 'expired' %}Expiré
+            {% elif r.status == 'warning' %}⚠ Alerte
+            {% else %}✓ OK{% endif %}
+          </span>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6">
+          <div class="empty-state">
+            <i class="bi bi-archive empty-state-icon"></i>
+            <p class="empty-state-title">Stock vide</p>
+            <p class="empty-state-sub">Aucun lot disponible actuellement</p>
+            {% if request.resolver_match.namespace != 'production' %}
+            <a href="{% url 'reception_new' %}" class="btn btn-primary">
+              <i class="bi bi-plus-circle"></i> Nouvelle réception
+            </a>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% block title %}Nouveau Transfert{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-hd">
+  <div>
+    <p class="page-hd-eyebrow">Magasin · Opérations</p>
+    <h1 class="page-hd-title">
+      <i class="bi bi-arrow-left-right" style="color:var(--warning);"></i>
+      Nouveau transfert
+    </h1>
+    <p class="page-hd-sub">Envoi de lots vers la production</p>
+  </div>
+  <div class="page-hd-actions">
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Dashboard
+    </a>
+  </div>
+</div>
+
+<div class="row g-4 justify-content-center">
+
+  <!-- Main Form -->
+  <div class="col-lg-8 col-xl-7">
+
+    {% if errors %}
+    <div class="alert alert-danger mb-3" style="font-size:13px;">
+      <ul class="mb-0">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="form-card">
+        <!-- Card Header -->
+        <div class="form-card-header magasin">
+          <div class="form-card-icon"><i class="bi bi-arrow-left-right"></i></div>
+          <div>
+            <p class="form-card-title">Transfert vers production</p>
+            <p class="form-card-sub">Sélectionnez un ou plusieurs lots à transférer</p>
+          </div>
+        </div>
+
+        <div class="form-card-body">
+
+          <!-- Section 1: Opérateur -->
+          <div class="form-section">
+            <div class="form-section-label">
+              <i class="bi bi-person-badge"></i>
+              Opérateur responsable
+            </div>
+            <div class="row g-3">
+              <div class="col-md-8">
+                <label class="form-label">
+                  <i class="bi bi-person-badge me-1" style="color:var(--info);"></i>
+                  Opérateur
+                </label>
+                <select name="profile" class="form-select" required>
+                  <option value="">— Sélectionner un opérateur —</option>
+                  {% for p in profile_choices %}
+                  <option value="{{ p.value }}" {% if profile_selected == p.value %}selected{% endif %}>{{ p.label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Lots -->
+          <div class="form-section">
+            <div class="form-section-label d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-layers"></i> Lots à transférer</span>
+              <span style="font-size:12px; font-weight:600; color:var(--success); text-transform:none; letter-spacing:0;">
+                <i class="bi bi-archive-fill me-1"></i>
+                Stock total disponible :
+                <span id="total-dispo-badge" style="background:#dcfce7; color:#15803d; padding:2px 10px; border-radius:20px; font-size:12px; font-weight:700; border:1px solid #bbf7d0;">0.000 kg</span>
+              </span>
+            </div>
+
+            <!-- Dynamic lots container -->
+            <div id="lots-container"></div>
+
+            <button type="button" class="btn btn-outline-primary btn-sm mt-1" onclick="addLot()">
+              <i class="bi bi-plus-circle"></i> Ajouter un lot
+            </button>
+          </div>
+
+          <!-- Récapitulatif -->
+          <div id="recap-section" style="display:none;">
+            <div class="form-section-label">
+              <i class="bi bi-clipboard-check" style="color:var(--success);"></i>
+              Récapitulatif avant validation
+            </div>
+            <div class="data-card mb-2">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Lot sélectionné</th>
+                    <th>Quantité (kg)</th>
+                  </tr>
+                </thead>
+                <tbody id="recap-body"></tbody>
+                <tfoot>
+                  <tr style="background:#fffbeb; border-top:2px solid #fde68a;">
+                    <td colspan="2" style="padding:10px 16px; font-weight:700; color:var(--warning); font-size:13px; text-align:right;">Total</td>
+                    <td style="padding:10px 16px; font-weight:700; color:var(--warning); font-size:14px;" id="recap-total">0.000 kg</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+        </div><!-- /form-card-body -->
+
+        <!-- Form Footer -->
+        <div class="form-card-footer">
+          <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-x"></i> Annuler
+          </a>
+          <button type="submit" class="btn btn-warning btn-lg" style="padding:10px 28px;">
+            <i class="bi bi-check-lg"></i> Valider le transfert
+          </button>
+        </div>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Help Sidebar -->
+  <div class="col-lg-4 col-xl-3">
+    <div class="help-card">
+      <div class="help-card-header">
+        <i class="bi bi-lightbulb" style="color:var(--warning);"></i>
+        Guide de saisie
+      </div>
+      <div class="help-card-body">
+        <ol class="help-steps">
+          <li>Sélectionner l'opérateur responsable</li>
+          <li>Choisir le(s) lot(s) à transférer</li>
+          <li>La quantité se remplit automatiquement</li>
+          <li>Ajuster la quantité si nécessaire</li>
+          <li>Vérifier le récapitulatif et valider</li>
+        </ol>
+        <div style="background:var(--prod-light); border-radius:var(--r-md); padding:12px; border:1px solid #fde68a;">
+          <div style="font-size:12px; font-weight:600; color:var(--prod); margin-bottom:4px;">
+            <i class="bi bi-info-circle me-1"></i> Quantité disponible
+          </div>
+          <p style="font-size:12px; color:var(--text-secondary); margin:0;">
+            La quantité max est préremplie selon le stock disponible du lot choisi.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const LOT_CHOICES = {{ lot_choices_json|safe }};
+let lotCount = 0;
+
+// Map lot_id → disponible
+const LOT_DISPO = {};
+LOT_CHOICES.forEach(c => { LOT_DISPO[c.value] = c.disponible; });
+
+// Total stock disponible (somme de tous les lots)
+const TOTAL_STOCK_DISPO = LOT_CHOICES.reduce((sum, c) => sum + c.disponible, 0);
+
+function buildSelect(name, idx) {
+  let html = `<select name="${name}" class="form-select lot-select" onchange="onLotChange(this, ${idx})">
+    <option value="">— Sélectionner un lot —</option>`;
+  LOT_CHOICES.forEach(c => {
+    html += `<option value="${c.value}" data-dispo="${c.disponible}">${c.label}</option>`;
+  });
+  html += '</select>';
+  return html;
+}
+
+function onLotChange(select, idx) {
+  const dispo = LOT_DISPO[select.value] || 0;
+  const row = select.closest('.lot-row-card');
+  const qteInput = row.querySelector('.lot-qte');
+  const dispoBox = row.querySelector('.lot-dispo-box');
+
+  if (select.value && dispo > 0) {
+    // Préremplir avec quantité disponible
+    qteInput.value = dispo.toFixed(3);
+    qteInput.max   = dispo.toFixed(3);
+    // Afficher info disponible du lot sélectionné
+    dispoBox.innerHTML = `
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:var(--r-md); padding:7px 14px; display:flex; align-items:center; gap:7px;">
+          <i class="bi bi-box-seam" style="color:var(--brand); font-size:13px;"></i>
+          <div>
+            <div style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.4px;">Dispo ce lot</div>
+            <div style="font-size:15px; font-weight:700; color:var(--brand);">${dispo.toFixed(3)} kg</div>
+          </div>
+        </div>
+        <div style="background:#dcfce7; border:1px solid #bbf7d0; border-radius:var(--r-md); padding:7px 14px; display:flex; align-items:center; gap:7px;">
+          <i class="bi bi-archive-fill" style="color:#15803d; font-size:13px;"></i>
+          <div>
+            <div style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.4px;">Total en stock</div>
+            <div style="font-size:15px; font-weight:700; color:#15803d;">${TOTAL_STOCK_DISPO.toFixed(3)} kg</div>
+          </div>
+        </div>
+      </div>`;
+    dispoBox.style.display = 'block';
+  } else {
+    qteInput.value = '';
+    qteInput.max   = '';
+    dispoBox.style.display = 'none';
+    dispoBox.innerHTML = '';
+  }
+  updateRecap();
+}
+
+function addLot() {
+  const i = lotCount++;
+  const container = document.getElementById('lots-container');
+  const div = document.createElement('div');
+  div.className = 'lot-row-card';
+  div.style.cssText = 'flex-direction:column; gap:10px;';
+  div.dataset.index = i;
+  div.innerHTML = `
+    <div style="display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;">
+      <div class="lot-num-badge" style="margin-bottom:2px;">${i + 1}</div>
+      <div style="flex:1; min-width:180px;">
+        <label class="form-label" style="margin-bottom:4px;">Lot ${i + 1}</label>
+        ${buildSelect('numero_lot_' + i, i)}
+      </div>
+      <div style="width:180px; flex-shrink:0;">
+        <label class="form-label d-flex justify-content-between" style="margin-bottom:4px;">
+          <span>Quantité (kg)</span>
+        </label>
+        <input type="number" name="quantite_${i}" class="form-control lot-qte"
+               min="0.001" step="0.001" placeholder="0.000" oninput="updateRecap()">
+      </div>
+      <div style="flex-shrink:0; padding-bottom:2px;">
+        <button type="button" class="btn-icon btn-icon-danger" onclick="removeLot(this)" title="Supprimer">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    </div>
+    <!-- Info disponibilité -->
+    <div class="lot-dispo-box" style="display:none; padding-left:38px;"></div>
+  `;
+  container.appendChild(div);
+  updateRecap();
+}
+
+function removeLot(btn) {
+  btn.closest('.lot-row-card').remove();
+  document.querySelectorAll('.lot-row-card').forEach((row, idx) => {
+    const badge = row.querySelector('.lot-num-badge');
+    if (badge) badge.textContent = idx + 1;
+    const labels = row.querySelectorAll('label');
+    labels.forEach(l => {
+      if (l.textContent.trim().startsWith('Lot ')) l.childNodes[0].textContent = `Lot ${idx + 1}`;
+    });
+  });
+  updateRecap();
+}
+
+function updateRecap() {
+  const rows = document.querySelectorAll('.lot-row-card');
+  let html = '';
+  let total = 0;
+  let hasData = false;
+
+  rows.forEach((row, idx) => {
+    const sel  = row.querySelector('.lot-select');
+    const lotVal   = sel?.value || '';
+    const lotLabel = sel?.options[sel.selectedIndex]?.text || '—';
+    const qte  = parseFloat(row.querySelector('.lot-qte')?.value) || 0;
+    if (lotVal || qte > 0) hasData = true;
+    total += qte;
+    html += `<tr>
+      <td><span class="tbl-id">${idx + 1}</span></td>
+      <td style="font-size:12px;">${lotVal ? lotLabel : '<span style="color:var(--text-muted);">—</span>'}</td>
+      <td><span class="tbl-qty" style="color:var(--warning);">${qte > 0 ? qte.toFixed(3) + ' kg' : '<span style="color:var(--text-muted);">—</span>'}</span></td>
+    </tr>`;
+  });
+
+  document.getElementById('recap-body').innerHTML = html;
+  document.getElementById('recap-total').textContent = total.toFixed(3) + ' kg';
+  document.getElementById('recap-section').style.display = hasData ? 'block' : 'none';
+}
+
+// Afficher le total stock disponible dans le header
+document.getElementById('total-dispo-badge').textContent = TOTAL_STOCK_DISPO.toFixed(3) + ' kg';
+
+addLot();
+</script>
+{% endblock %}

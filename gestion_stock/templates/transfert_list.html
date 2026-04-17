@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Historique Transferts{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-hd">
+  <div>
+    <p class="page-hd-eyebrow">Magasin · Historique</p>
+    <h1 class="page-hd-title">
+      <i class="bi bi-arrow-left-right" style="color: var(--warning);"></i>
+      Transferts
+      <span class="count-pill">{{ sorties|length }}</span>
+    </h1>
+    <p class="page-hd-sub">Suivi des sorties de stock vers la production</p>
+  </div>
+  <div class="page-hd-actions">
+    <a href="{% url 'transfert' %}" class="btn btn-primary">
+      <i class="bi bi-plus-circle"></i> Nouveau transfert
+    </a>
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Dashboard
+    </a>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+  <div class="search-container">
+    <i class="bi bi-search search-icon"></i>
+    <input type="text" id="searchInput" class="form-control search-input" placeholder="Rechercher lot, opérateur…">
+  </div>
+  <select class="form-select" style="width:auto; height:36px; font-size:13px;">
+    <option>Tous les statuts</option>
+    <option>Expiré</option>
+    <option>Avertissement</option>
+    <option>OK</option>
+  </select>
+  <input type="date" class="form-control" style="width:auto; height:36px; font-size:13px;">
+  <button class="btn btn-outline-primary btn-sm">
+    <i class="bi bi-funnel"></i> Filtrer
+  </button>
+  <div style="margin-left:auto;">
+    <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+      <i class="bi bi-printer"></i> Exporter
+    </button>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="data-card">
+  <div class="data-card-header">
+    <span class="data-card-title">
+      <i class="bi bi-table" style="color:var(--text-muted);"></i>
+      Tous les transferts
+    </span>
+  </div>
+
+  <table class="tbl" id="transfertsTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Lot</th>
+        <th>Opérateur</th>
+        <th>Date / Heure</th>
+        <th>Quantité</th>
+        <th>Expiration</th>
+        <th>Statut</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sortie in sorties %}
+      <tr>
+        <td><span class="tbl-id">#{{ sortie.id }}</span></td>
+        <td>
+          {% if sortie.numero_lot %}
+            <span class="tbl-lot">{{ sortie.numero_lot }}</span>
+          {% else %}
+            <span style="color:var(--text-muted);">—</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if sortie.profile %}
+            <div>
+              <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">{{ sortie.profile.matricule }}</span>
+              <div style="font-size:11px; color:var(--text-muted);">{{ sortie.profile.nom }} {{ sortie.profile.prenom }}</div>
+            </div>
+          {% else %}
+            <span style="color:var(--text-muted);">—</span>
+          {% endif %}
+        </td>
+        <td style="color:var(--text-muted); font-size:12px;">
+          {% if sortie.date_heure %}
+            {{ sortie.date_heure|date:"d/m/Y" }}<br>
+            <span style="font-size:11px;">{{ sortie.date_heure|date:"H:i" }}</span>
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          <span class="tbl-qty" style="color:var(--warning);">{{ sortie.quantite|floatformat:3 }} <small style="font-weight:400; color:var(--text-muted);">kg</small></span>
+        </td>
+        <td style="font-size:12px; color:var(--text-secondary);">
+          {{ sortie.expiration_info.date|default:"—" }}
+        </td>
+        <td>
+          {% if sortie.expiration_info.status == 'expired' %}
+            <span class="badge status-error">Expiré</span>
+          {% elif sortie.expiration_info.status == 'warning' %}
+            <span class="badge status-warn">Avertissement</span>
+          {% else %}
+            <span class="badge status-ok">OK</span>
+          {% endif %}
+        </td>
+        <td>
+          <div class="tbl-actions">
+            <a href="{% url 'transfert_detail' sortie.id %}" class="btn-icon btn-icon-info" title="Détails">
+              <i class="bi bi-eye"></i>
+            </a>
+            {% if request.user.profile.type_operateur == 'admin' %}
+            <a href="{% url 'transfert_update' sortie.id %}" class="btn-icon btn-icon-warning" title="Modifier">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="{% url 'transfert_delete' sortie.id %}" class="btn-icon btn-icon-danger" title="Supprimer">
+              <i class="bi bi-trash"></i>
+            </a>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="8">
+          <div class="empty-state">
+            <i class="bi bi-arrow-left-right empty-state-icon"></i>
+            <p class="empty-state-title">Aucun transfert enregistré</p>
+            <p class="empty-state-sub">Les transferts vers la production apparaîtront ici</p>
+            <a href="{% url 'transfert' %}" class="btn btn-primary">
+              <i class="bi bi-plus-circle"></i> Nouveau transfert
+            </a>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('#transfertsTable tbody tr').forEach(row => {
+    row.style.display = (!q || row.textContent.toLowerCase().includes(q)) ? '' : 'none';
+  });
+});
+</script>
+{% endblock %}

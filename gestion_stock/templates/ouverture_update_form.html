@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Modifier Consommation #{{ ouverture.pk }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-5">
+  <div>
+    <h1><i class="bi bi-pencil text-warning me-2"></i>Modifier Consommation #{{ ouverture.pk }}</h1>
+    <p class="text-muted mb-0">{{ ouverture.date_heure_ouverture|date:"d/m/Y H:i" }}</p>
+  </div>
+  <a href="{% url 'production:historique' %}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Retour
+  </a>
+</div>
+
+{% if form.errors %}
+<div class="alert alert-danger mb-4">
+  <ul class="mb-0">
+    {% for field in form %}{% for error in field.errors %}
+      <li>{{ field.label }} : {{ error }}</li>
+    {% endfor %}{% endfor %}
+    {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card border-0 shadow">
+      <div class="card-body p-5">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <div class="row g-4 mb-4">
+            <div class="col-md-6">
+              <label class="form-label fw-bold"><i class="bi bi-person-badge text-info me-1"></i>Opérateur</label>
+              {{ form.profile }}
+              {% if form.profile.errors %}<div class="text-danger small mt-1">{{ form.profile.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold"><i class="bi bi-diagram-3 text-warning me-1"></i>Ligne production</label>
+              {{ form.ligne_production }}
+              {% if form.ligne_production.errors %}<div class="text-danger small mt-1">{{ form.ligne_production.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="row g-4 mb-4">
+            <div class="col-md-6">
+              <label class="form-label fw-bold"><i class="bi bi-clock-history text-info me-1"></i>Date/Heure ouverture</label>
+              {{ form.date_heure_ouverture }}
+              {% if form.date_heure_ouverture.errors %}<div class="text-danger small mt-1">{{ form.date_heure_ouverture.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold"><i class="bi bi-upc-scan text-primary me-1"></i>Lot consommé</label>
+              {{ form.numero_lot }}
+              {% if form.numero_lot.errors %}<div class="text-danger small mt-1">{{ form.numero_lot.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="row g-4 mb-4">
+            <div class="col-md-6">
+              <label class="form-label fw-bold"><i class="bi bi-hash text-secondary me-1"></i>OF (Ordre Fabrication)</label>
+              {{ form.numero_ordre_fabrication }}
+              {% if form.numero_ordre_fabrication.errors %}<div class="text-danger small mt-1">{{ form.numero_ordre_fabrication.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold"><i class="bi bi-box-seam text-success me-1"></i>Produit fabriqué</label>
+              {{ form.nom_produit }}
+              {% if form.nom_produit.errors %}<div class="text-danger small mt-1">{{ form.nom_produit.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="row g-4 mb-5">
+            <div class="col-md-8">
+              <label class="form-label fw-bold"><i class="bi bi-speedometer2 text-danger me-1"></i>Quantité consommée (par pièces)</label>
+              {{ form.quantite }}
+              {% if form.quantite.errors %}<div class="text-danger small mt-1">{{ form.quantite.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold"><i class="bi bi-clock text-info me-1"></i>Shift</label>
+              {{ form.shift }}
+              {% if form.shift.errors %}<div class="text-danger small mt-1">{{ form.shift.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="d-flex gap-3 justify-content-end">
+            <a href="{% url 'production:historique' %}" class="btn btn-outline-secondary px-4">Annuler</a>
+            <button type="submit" class="btn btn-warning px-4">
+              <i class="bi bi-check-lg me-1"></i>Enregistrer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

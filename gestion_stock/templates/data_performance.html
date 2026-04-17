@@ -1,0 +1,574 @@
+{% extends 'base.html' %}
+
+{% block title %}Data & Performance{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --pbi-blue:   #0078d4;
+  --pbi-green:  #107c10;
+  --pbi-amber:  #c19c00;
+  --pbi-red:    #a80000;
+  --pbi-purple: #8764b8;
+  --pbi-teal:   #038387;
+  --pbi-bg:     #f3f2f1;
+  --pbi-card:   #ffffff;
+  --pbi-border: #e1dfdd;
+  --pbi-text:   #323130;
+  --pbi-muted:  #605e5c;
+}
+body { background: var(--pbi-bg) !important; }
+
+/* KPI */
+.kpi-card {
+  background: var(--pbi-card);
+  border: 1px solid var(--pbi-border);
+  border-left: 4px solid transparent;
+  border-radius: 4px;
+  padding: 18px 20px;
+  height: 100%;
+  transition: box-shadow .15s;
+}
+.kpi-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.09); }
+.kpi-card.blue   { border-left-color: var(--pbi-blue); }
+.kpi-card.green  { border-left-color: var(--pbi-green); }
+.kpi-card.amber  { border-left-color: var(--pbi-amber); }
+.kpi-card.purple { border-left-color: var(--pbi-purple); }
+.kpi-card.teal   { border-left-color: var(--pbi-teal); }
+.kpi-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--pbi-muted); margin-bottom:5px; }
+.kpi-value { font-size:26px; font-weight:700; line-height:1.1; margin-bottom:4px; }
+.kpi-sub   { font-size:11px; color:var(--pbi-muted); }
+
+/* Viz card */
+.viz-card {
+  background: var(--pbi-card);
+  border: 1px solid var(--pbi-border);
+  border-radius: 4px;
+  height: 100%;
+}
+.viz-header {
+  padding: 13px 16px 9px;
+  border-bottom: 1px solid var(--pbi-border);
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .5px;
+  color: var(--pbi-muted);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.viz-body { padding: 14px 16px; }
+
+/* Filter bar */
+.filter-bar {
+  background: var(--pbi-card);
+  border: 1px solid var(--pbi-border);
+  border-radius: 4px;
+  padding: 12px 18px;
+}
+.period-chip {
+  display:inline-block; padding:4px 14px; border-radius:20px; font-size:12px;
+  font-weight:600; cursor:pointer; border: 1px solid var(--pbi-border);
+  background: white; color: var(--pbi-muted); text-decoration:none;
+  transition: all .15s;
+}
+.period-chip:hover, .period-chip.active {
+  background: var(--pbi-blue); color:#fff; border-color: var(--pbi-blue);
+}
+
+/* PBI Table */
+.pbi-table { width:100%; font-size:12px; border-collapse:collapse; }
+.pbi-table thead tr { border-bottom: 2px solid var(--pbi-border); }
+.pbi-table thead th { padding:7px 10px; font-weight:700; color:var(--pbi-muted); font-size:10px; text-transform:uppercase; letter-spacing:.4px; }
+.pbi-table tbody tr { border-bottom: 1px solid #f3f2f1; transition: background .1s; }
+.pbi-table tbody tr:hover { background: #f8f7f6; }
+.pbi-table tbody td { padding:8px 10px; color:var(--pbi-text); }
+
+/* Mini progress */
+.mini-bar { height:5px; border-radius:3px; background:#edebe9; margin-top:4px; }
+.mini-fill { height:100%; border-radius:3px; }
+
+/* Rank badge */
+.rank { display:inline-flex; align-items:center; justify-content:center;
+        width:20px; height:20px; border-radius:50%; font-size:10px; font-weight:700;
+        background: var(--pbi-border); color: var(--pbi-muted); }
+.rank.gold   { background:#fff4ce; color:#7a4f00; }
+.rank.silver { background:#f3f2f1; color:#605e5c; }
+.rank.bronze { background:#fde7e9; color:#a80000; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── HEADER ──────────────────────────────────────────────────── -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#605e5c;">
+      Production · Analytics
+    </div>
+    <h1 style="font-size:22px;font-weight:700;color:#323130;margin:2px 0 0;">
+      Data &amp; Performance
+    </h1>
+  </div>
+  <div style="font-size:12px;color:#605e5c;">
+    <i class="bi bi-clock me-1"></i>{{ realtime_now|date:"d/m/Y H:i" }}
+  </div>
+</div>
+
+<!-- ── FILTER BAR ───────────────────────────────────────────────── -->
+<div class="filter-bar mb-3">
+  <form method="get" class="d-flex flex-wrap align-items-center gap-3">
+
+    <!-- Chips période -->
+    <div class="d-flex gap-2 flex-wrap">
+      {% for val, label in period_choices %}{% endfor %}
+      <a href="?periode=today{% if operateur_filter_selected %}&operateur={{ operateur_filter_selected }}{% endif %}"
+         class="period-chip {% if periode_selected == 'today' %}active{% endif %}">Aujourd'hui</a>
+      <a href="?periode=7j{% if operateur_filter_selected %}&operateur={{ operateur_filter_selected }}{% endif %}"
+         class="period-chip {% if periode_selected == '7j' %}active{% endif %}">7 jours</a>
+      <a href="?periode=30j{% if operateur_filter_selected %}&operateur={{ operateur_filter_selected }}{% endif %}"
+         class="period-chip {% if periode_selected == '30j' %}active{% endif %}">30 jours</a>
+      <a href="?periode=all{% if operateur_filter_selected %}&operateur={{ operateur_filter_selected }}{% endif %}"
+         class="period-chip {% if periode_selected == 'all' %}active{% endif %}">Tout</a>
+    </div>
+
+    <!-- Séparateur -->
+    <div style="width:1px;height:24px;background:var(--pbi-border)"></div>
+
+    {% if is_admin %}
+    <select name="operateur" class="form-select form-select-sm" style="width:200px;font-size:12px;" onchange="this.form.submit()">
+      <option value="">Tous les opérateurs</option>
+      {% for op in operateurs_list %}
+      <option value="{{ op.id }}" {% if operateur_filter_selected == op.id|stringformat:"s" %}selected{% endif %}>
+        {{ op.nom }} {{ op.prenom }}
+      </option>
+      {% endfor %}
+    </select>
+    <input type="hidden" name="periode" value="{{ periode_selected }}">
+    {% endif %}
+
+    {% if periode_selected != 'all' or operateur_filter_selected %}
+    <a href="{% url 'production:data_performance' %}"
+       style="font-size:11px;color:var(--pbi-muted);text-decoration:none;">
+      <i class="bi bi-x-circle me-1"></i>Reset
+    </a>
+    {% endif %}
+
+  </form>
+</div>
+
+{% if not analytics_has_data %}
+<!-- ── NO DATA ──────────────────────────────────────────────────── -->
+<div class="viz-card">
+  <div class="viz-body text-center py-5">
+    <i class="bi bi-graph-down" style="font-size:3rem;color:#c8c6c4;"></i>
+    <div style="font-size:15px;font-weight:600;color:var(--pbi-text);margin-top:12px;">Aucune donnée disponible</div>
+    <div style="font-size:12px;color:var(--pbi-muted);margin:4px 0 16px;">Aucune production enregistrée pour cette période.</div>
+    <a href="{% url 'production:nouvelle_production' %}" class="btn btn-warning btn-sm">
+      <i class="bi bi-plus-circle me-1"></i>Nouvelle Production
+    </a>
+  </div>
+</div>
+
+{% else %}
+
+<!-- ── KPI ROW ─────────────────────────────────────────────────── -->
+<div class="row g-3 mb-3">
+
+  <div class="col-6 col-md-4 col-xl">
+    <div class="kpi-card amber">
+      <div class="kpi-label">Aujourd'hui</div>
+      <div class="kpi-value" style="color:var(--pbi-amber)">{{ today_total }}</div>
+      <div class="kpi-sub">pcs · {{ today_count }} opération{{ today_count|pluralize }}</div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-4 col-xl">
+    <div class="kpi-card blue">
+      <div class="kpi-label">
+        {% if periode_selected == 'today' %}Aujourd'hui
+        {% elif periode_selected == '7j' %}7 derniers jours
+        {% elif periode_selected == '30j' %}30 derniers jours
+        {% else %}Total période{% endif %}
+      </div>
+      <div class="kpi-value" style="color:var(--pbi-blue)">{{ period_total }}</div>
+      <div class="kpi-sub">pcs · {{ period_count }} opération{{ period_count|pluralize }}</div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-4 col-xl">
+    <div class="kpi-card green">
+      <div class="kpi-label">Top Shift</div>
+      <div class="kpi-value" style="color:var(--pbi-green);font-size:20px;">{{ top_shift }}</div>
+      <div class="kpi-sub">Shift le plus actif</div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-4 col-xl">
+    <div class="kpi-card teal">
+      <div class="kpi-label">Top Produit</div>
+      <div class="kpi-value" style="color:var(--pbi-teal);font-size:16px;word-break:break-word;">{{ top_product }}</div>
+      <div class="kpi-sub">Produit dominant</div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-4 col-xl">
+    <div class="kpi-card purple">
+      <div class="kpi-label">Opérations</div>
+      <div class="kpi-value" style="color:var(--pbi-purple)">{{ period_count }}</div>
+      <div class="kpi-sub">sur la période</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── CHARTS ROW 1 ────────────────────────────────────────────── -->
+<div class="row g-3 mb-3">
+
+  <!-- Évolution mensuelle -->
+  <div class="col-lg-8">
+    <div class="viz-card">
+      <div class="viz-header">
+        <span><i class="bi bi-graph-up me-2" style="color:var(--pbi-amber)"></i>Évolution mensuelle — Consommation (pcs)</span>
+      </div>
+      <div class="viz-body" style="height:240px">
+        <canvas id="chartMonthly"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shifts donut -->
+  <div class="col-lg-4">
+    <div class="viz-card">
+      <div class="viz-header">
+        <span><i class="bi bi-pie-chart me-2" style="color:var(--pbi-purple)"></i>Répartition par Shift</span>
+      </div>
+      <div class="viz-body d-flex flex-column align-items-center" style="height:240px">
+        {% if shift_rows %}
+        <canvas id="chartShift" style="max-height:160px"></canvas>
+        <div class="d-flex flex-wrap gap-3 mt-3 justify-content-center">
+          {% for s in shift_rows %}
+          <div class="text-center">
+            <div style="font-size:13px;font-weight:700;color:var(--pbi-text)">{{ s.total|floatformat:0 }}</div>
+            <div style="font-size:10px;color:var(--pbi-muted);text-transform:uppercase;">Shift {{ s.shift }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4" style="color:var(--pbi-muted);font-size:12px;">Aucune donnée shift</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── CHARTS ROW 2 ────────────────────────────────────────────── -->
+<div class="row g-3 mb-3">
+
+  <!-- Par ligne -->
+  <div class="col-lg-6">
+    <div class="viz-card">
+      <div class="viz-header">
+        <span><i class="bi bi-diagram-3 me-2" style="color:var(--pbi-teal)"></i>Par Ligne de Production (pcs)</span>
+      </div>
+      <div class="viz-body" style="height:220px">
+        {% if by_line %}
+        <canvas id="chartLine"></canvas>
+        {% else %}
+        <div class="text-center py-4" style="color:var(--pbi-muted);font-size:12px;">Aucune donnée</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Par produit -->
+  <div class="col-lg-6">
+    <div class="viz-card">
+      <div class="viz-header">
+        <span><i class="bi bi-box-seam me-2" style="color:var(--pbi-blue)"></i>Top Produits (pcs)</span>
+      </div>
+      <div class="viz-body" style="height:220px">
+        {% if by_product %}
+        <canvas id="chartProduct"></canvas>
+        {% else %}
+        <div class="text-center py-4" style="color:var(--pbi-muted);font-size:12px;">Aucune donnée</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── TABLES ROW ──────────────────────────────────────────────── -->
+<div class="row g-3 mb-3">
+
+  <!-- Classement opérateurs -->
+  <div class="col-lg-6">
+    <div class="viz-card">
+      <div class="viz-header">
+        <span><i class="bi bi-person-badge me-2" style="color:var(--pbi-blue)"></i>Classement Opérateurs</span>
+      </div>
+      <div class="viz-body p-0">
+        <table class="pbi-table">
+          <thead>
+            <tr>
+              <th class="ps-3" style="width:28px">#</th>
+              <th>Opérateur</th>
+              <th>Ops</th>
+              <th>Total (pcs)</th>
+              <th style="width:80px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in by_op %}
+            <tr>
+              <td class="ps-3">
+                {% if forloop.counter == 1 %}<span class="rank gold">1</span>
+                {% elif forloop.counter == 2 %}<span class="rank silver">2</span>
+                {% elif forloop.counter == 3 %}<span class="rank bronze">3</span>
+                {% else %}<span class="rank">{{ forloop.counter }}</span>{% endif %}
+              </td>
+              <td>
+                <div style="font-weight:600;color:var(--pbi-text)">{{ item.profile__nom }} {{ item.profile__prenom }}</div>
+                <div style="font-size:10px;color:var(--pbi-muted)">{{ item.profile__matricule }}</div>
+              </td>
+              <td style="color:var(--pbi-muted)">{{ item.ops }}</td>
+              <td style="font-weight:700;color:var(--pbi-blue)">{{ item.total }}</td>
+              <td>
+                <div class="mini-bar">
+                  <div class="mini-fill" style="width:{{ item.pct }}%;background:var(--pbi-blue)"></div>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center py-3" style="color:var(--pbi-muted);font-size:12px">Aucun opérateur</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calculateur produit -->
+  <div class="col-lg-6">
+    <div class="viz-card">
+      <div class="viz-header">
+        <span><i class="bi bi-calculator me-2" style="color:var(--pbi-amber)"></i>Calculateur par Produit</span>
+      </div>
+      <div class="viz-body">
+        <form method="get" class="d-flex gap-2 align-items-end mb-3">
+          <input type="hidden" name="periode" value="{{ periode_selected }}">
+          {% if is_admin %}<input type="hidden" name="operateur" value="{{ operateur_filter_selected }}">{% endif %}
+          <div class="flex-fill">
+            <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--pbi-muted);letter-spacing:.4px;display:block;margin-bottom:5px;">
+              Sélectionner un produit
+            </label>
+            <select name="produit" class="form-select form-select-sm" style="font-size:12px;">
+              <option value="">— Choisir —</option>
+              {% for p in produits_existants %}
+              <option value="{{ p }}" {% if produit_selected == p %}selected{% endif %}>{{ p }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-warning btn-sm" {% if not produits_existants %}disabled{% endif %}>
+            <i class="bi bi-search"></i>
+          </button>
+        </form>
+
+        {% if produit_selected %}
+        <div style="background:var(--pbi-bg);border-radius:4px;padding:16px;border:1px solid var(--pbi-border);">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--pbi-muted);margin-bottom:8px;">
+            Résultat
+          </div>
+          <div style="font-size:13px;font-weight:600;color:var(--pbi-text);margin-bottom:4px;">
+            {{ produit_selected }}
+          </div>
+          <div style="font-size:28px;font-weight:700;color:var(--pbi-amber);">
+            {{ produit_total }} <span style="font-size:14px;font-weight:400;color:var(--pbi-muted)">pcs</span>
+          </div>
+          <div style="font-size:11px;color:var(--pbi-muted);margin-top:2px;">
+            consommé sur la période
+          </div>
+        </div>
+        {% else %}
+        <div style="text-align:center;padding:20px;color:var(--pbi-muted);font-size:12px;">
+          <i class="bi bi-arrow-up" style="display:block;font-size:1.5rem;margin-bottom:6px;"></i>
+          Sélectionnez un produit pour voir le total
+        </div>
+        {% endif %}
+
+        {% if by_product %}
+        <hr style="border-color:var(--pbi-border);margin:14px 0;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--pbi-muted);margin-bottom:8px;">
+          Détail produits
+        </div>
+        {% for item in by_product %}
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div style="font-size:12px;color:var(--pbi-text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px;">
+            {{ item.nom_produit }}
+          </div>
+          <div style="font-size:12px;font-weight:700;color:var(--pbi-text);white-space:nowrap;">
+            {{ item.total }} pcs
+          </div>
+        </div>
+        <div class="mini-bar mb-2">
+          <div class="mini-fill" style="width:{% widthratio item.total max_product 100 %}%;background:var(--pbi-amber)"></div>
+        </div>
+        {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endif %}
+
+<!-- ── Charts JS ───────────────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function(){
+  const AMBER  = '#c19c00';
+  const BLUE   = '#0078d4';
+  const PURPLE = '#8764b8';
+  const TEAL   = '#038387';
+  const GREEN  = '#107c10';
+  const PALETTE = [AMBER, BLUE, TEAL, PURPLE, GREEN, '#a80000', '#ca5010', '#038387'];
+
+  const baseOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+  };
+
+  /* Monthly area chart */
+  const ctxM = document.getElementById('chartMonthly');
+  if (ctxM) {
+    new Chart(ctxM, {
+      type: 'line',
+      data: {
+        labels: {{ monthly_labels|safe }},
+        datasets: [{
+          label: 'pcs',
+          data: {{ monthly_data|safe }},
+          borderColor: AMBER,
+          backgroundColor: 'rgba(193,156,0,.12)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: AMBER,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 2,
+        }]
+      },
+      options: {
+        ...baseOpts,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: c => ` ${c.parsed.y} pcs` } }
+        },
+        scales: {
+          y: { beginAtZero: true, grid: { color: '#f3f2f1' },
+               ticks: { font: { size: 11 }, color: '#605e5c', callback: v => v + ' pcs' },
+               border: { color: '#e1dfdd' } },
+          x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#605e5c' },
+               border: { color: '#e1dfdd' } }
+        }
+      }
+    });
+  }
+
+  /* Shift donut */
+  const ctxS = document.getElementById('chartShift');
+  if (ctxS) {
+    new Chart(ctxS, {
+      type: 'doughnut',
+      data: {
+        labels: {{ shift_labels|safe }},
+        datasets: [{
+          data: {{ shift_data|safe }},
+          backgroundColor: PALETTE,
+          borderColor: '#fff',
+          borderWidth: 3,
+          hoverOffset: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '62%',
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 }, padding: 10 } },
+          tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed} pcs` } }
+        }
+      }
+    });
+  }
+
+  /* Line horizontal bar */
+  const ctxL = document.getElementById('chartLine');
+  if (ctxL) {
+    new Chart(ctxL, {
+      type: 'bar',
+      data: {
+        labels: {{ line_labels|safe }},
+        datasets: [{
+          label: 'pcs',
+          data: {{ line_data|safe }},
+          backgroundColor: TEAL + 'cc',
+          borderColor: TEAL,
+          borderWidth: 1,
+          borderRadius: 3,
+        }]
+      },
+      options: {
+        ...baseOpts,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: c => ` ${c.parsed.x} pcs` } }
+        },
+        scales: {
+          x: { beginAtZero: true, grid: { color: '#f3f2f1' },
+               ticks: { font: { size: 11 }, color: '#605e5c' },
+               border: { color: '#e1dfdd' } },
+          y: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#605e5c' },
+               border: { color: '#e1dfdd' } }
+        }
+      }
+    });
+  }
+
+  /* Product horizontal bar */
+  const ctxP = document.getElementById('chartProduct');
+  if (ctxP) {
+    new Chart(ctxP, {
+      type: 'bar',
+      data: {
+        labels: {{ product_labels|safe }},
+        datasets: [{
+          label: 'pcs',
+          data: {{ product_data|safe }},
+          backgroundColor: BLUE + 'cc',
+          borderColor: BLUE,
+          borderWidth: 1,
+          borderRadius: 3,
+        }]
+      },
+      options: {
+        ...baseOpts,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: c => ` ${c.parsed.x} pcs` } }
+        },
+        scales: {
+          x: { beginAtZero: true, grid: { color: '#f3f2f1' },
+               ticks: { font: { size: 11 }, color: '#605e5c' },
+               border: { color: '#e1dfdd' } },
+          y: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#605e5c' },
+               border: { color: '#e1dfdd' } }
+        }
+      }
+    });
+  }
+})();
+</script>
+{% endblock %}

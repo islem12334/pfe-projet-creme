@@ -1,0 +1,472 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard — Magasin{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Power BI palette ─────────────────────────── */
+:root {
+  --pbi-blue:   #0078d4;
+  --pbi-green:  #107c10;
+  --pbi-amber:  #c19c00;
+  --pbi-red:    #a80000;
+  --pbi-purple: #8764b8;
+  --pbi-bg:     #f3f2f1;
+  --pbi-card:   #ffffff;
+  --pbi-border: #e1dfdd;
+  --pbi-text:   #323130;
+  --pbi-muted:  #605e5c;
+}
+
+body { background: var(--pbi-bg) !important; }
+
+/* ── KPI cards ────────────────────────────────── */
+.kpi-card {
+  background: var(--pbi-card);
+  border: 1px solid var(--pbi-border);
+  border-radius: 4px;
+  padding: 20px 22px;
+  border-left: 4px solid transparent;
+  transition: box-shadow .15s;
+  height: 100%;
+}
+.kpi-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.10); }
+.kpi-card.blue   { border-left-color: var(--pbi-blue); }
+.kpi-card.green  { border-left-color: var(--pbi-green); }
+.kpi-card.amber  { border-left-color: var(--pbi-amber); }
+.kpi-card.red    { border-left-color: var(--pbi-red); }
+.kpi-card.purple { border-left-color: var(--pbi-purple); }
+
+.kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--pbi-muted);
+  margin-bottom: 6px;
+}
+.kpi-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--pbi-text);
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+.kpi-sub {
+  font-size: 12px;
+  color: var(--pbi-muted);
+}
+.trend-up   { color: var(--pbi-green); font-size: 12px; font-weight: 600; }
+.trend-down { color: var(--pbi-red);   font-size: 12px; font-weight: 600; }
+
+/* ── Visual cards ─────────────────────────────── */
+.viz-card {
+  background: var(--pbi-card);
+  border: 1px solid var(--pbi-border);
+  border-radius: 4px;
+  height: 100%;
+}
+.viz-header {
+  padding: 14px 18px 8px;
+  border-bottom: 1px solid var(--pbi-border);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--pbi-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.viz-body { padding: 16px 18px; }
+
+/* ── Progress bar ─────────────────────────────── */
+.util-bar { height: 8px; border-radius: 4px; background: #edebe9; overflow: hidden; }
+.util-fill { height: 100%; border-radius: 4px; background: var(--pbi-blue);
+             transition: width .6s ease; }
+
+/* ── Table ────────────────────────────────────── */
+.pbi-table { width: 100%; font-size: 13px; border-collapse: collapse; }
+.pbi-table thead tr { border-bottom: 2px solid var(--pbi-border); }
+.pbi-table thead th { padding: 8px 10px; font-weight: 600; color: var(--pbi-muted);
+                      font-size: 11px; text-transform: uppercase; letter-spacing: .4px; }
+.pbi-table tbody tr { border-bottom: 1px solid #f3f2f1; transition: background .1s; }
+.pbi-table tbody tr:hover { background: #f8f7f6; }
+.pbi-table tbody td { padding: 9px 10px; color: var(--pbi-text); }
+
+/* ── Alert strip ──────────────────────────────── */
+.alert-strip {
+  border-radius: 4px;
+  padding: 10px 16px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+}
+.alert-strip.danger  { background: #fde7e9; color: #a80000; }
+.alert-strip.warning { background: #fff4ce; color: #7a4f00; }
+
+/* ── Badge pill ───────────────────────────────── */
+.pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-right: 4px;
+}
+.pill-danger  { background: #fde7e9; color: #a80000; }
+.pill-warning { background: #fff4ce; color: #7a4f00; }
+.pill-success { background: #dff6dd; color: #107c10; }
+.pill-blue    { background: #deecf9; color: #0078d4; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── HEADER ──────────────────────────────────────────────── -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#605e5c;">
+      Magasin · Gestion Stock
+    </div>
+    <h1 style="font-size:22px;font-weight:700;color:#323130;margin:2px 0 0;">
+      Tableau de bord
+    </h1>
+  </div>
+  <div style="font-size:12px;color:#605e5c;">
+    <i class="bi bi-calendar3 me-1"></i>
+    {% now "d/m/Y" %} &nbsp;
+    {% if current_profile %}
+      · <strong>{{ current_profile.nom }} {{ current_profile.prenom }}</strong>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ── ALERTES ─────────────────────────────────────────────── -->
+{% if lots_expires_count or lots_warning_count %}
+<div class="d-flex flex-wrap gap-2 mb-3">
+  {% if lots_expires_count %}
+  <div class="alert-strip danger flex-fill">
+    <i class="bi bi-x-circle-fill"></i>
+    <strong>{{ lots_expires_count }} expirée{{ lots_expires_count|pluralize }}</strong>
+    <span style="opacity:.7">—</span>
+    {% for r in lots_expires_list %}
+      <span class="pill pill-danger">{{ r.fournisseur.nom }} {{ r.date_expiration|date:"d/m/Y" }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if lots_warning_count %}
+  <div class="alert-strip warning flex-fill">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <strong>{{ lots_warning_count }} expire dans ≤ 7j</strong>
+    <span style="opacity:.7">—</span>
+    {% for r in lots_warning_list %}
+      <span class="pill pill-warning">{{ r.fournisseur.nom }} {{ r.date_expiration|date:"d/m/Y" }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- ── KPI ROW ──────────────────────────────────────────────── -->
+<div class="row g-3 mb-3">
+
+  <!-- Stock disponible -->
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="kpi-card blue">
+      <div class="kpi-label">Stock disponible</div>
+      <div class="kpi-value" style="color:var(--pbi-blue)">{{ stock_dispo|floatformat:3 }}</div>
+      <div class="kpi-sub">kg restants</div>
+    </div>
+  </div>
+
+  <!-- Total reçu -->
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="kpi-card purple">
+      <div class="kpi-label">Total reçu</div>
+      <div class="kpi-value" style="color:var(--pbi-purple)">{{ total_recu|floatformat:3 }}</div>
+      <div class="kpi-sub">kg cumulés</div>
+    </div>
+  </div>
+
+  <!-- Utilisation stock -->
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="kpi-card amber">
+      <div class="kpi-label">Taux utilisation</div>
+      <div class="kpi-value" style="color:var(--pbi-amber)">{{ utilisation_pct }}%</div>
+      <div class="util-bar mt-2">
+        <div class="util-fill" style="width:{{ utilisation_pct }}%;background:var(--pbi-amber)"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Réceptions ce mois -->
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="kpi-card green">
+      <div class="kpi-label">Réceptions / mois</div>
+      <div class="kpi-value" style="color:var(--pbi-green)">{{ receptions_mois }}</div>
+      <div class="kpi-sub">
+        Total : {{ total_receptions }}
+        {% if trend_rec_pct is not None %}
+          &nbsp;
+          {% if trend_rec_dir == 'up' %}
+            <span class="trend-up">▲ {{ trend_rec_pct }}%</span>
+          {% else %}
+            <span class="trend-down">▼ {{ trend_rec_pct|slice:"1:" }}%</span>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Transferts ce mois -->
+  <div class="col-6 col-md-4 col-xl-2">
+    <div class="kpi-card amber">
+      <div class="kpi-label">Transferts / mois</div>
+      <div class="kpi-value" style="color:var(--pbi-amber)">{{ transfers_mois }}</div>
+      <div class="kpi-sub">
+        Total : {{ total_transfers }}
+        {% if trend_trans_pct is not None %}
+          &nbsp;
+          {% if trend_trans_dir == 'up' %}
+            <span class="trend-up">▲ {{ trend_trans_pct }}%</span>
+          {% else %}
+            <span class="trend-down">▼ {{ trend_trans_pct|slice:"1:" }}%</span>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Alertes expiration -->
+  <div class="col-6 col-md-4 col-xl-2">
+    {% if lots_expires_count %}
+    <div class="kpi-card red">
+      <div class="kpi-label">Expirées</div>
+      <div class="kpi-value" style="color:var(--pbi-red)">{{ lots_expires_count }}</div>
+      <div class="kpi-sub">Avert. ≤7j : {{ lots_warning_count }}</div>
+    </div>
+    {% else %}
+    <div class="kpi-card green">
+      <div class="kpi-label">Expirations</div>
+      <div class="kpi-value" style="color:var(--pbi-green)">✓</div>
+      <div class="kpi-sub">Avert. ≤7j : {{ lots_warning_count }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- ── CHARTS ROW ───────────────────────────────────────────── -->
+<div class="row g-3 mb-3">
+
+  <!-- Évolution mensuelle -->
+  <div class="col-lg-8">
+    <div class="viz-card">
+      <div class="viz-header">
+        <span><i class="bi bi-bar-chart-line me-2" style="color:var(--pbi-blue)"></i>Évolution mensuelle — Réceptions vs Transferts (kg)</span>
+      </div>
+      <div class="viz-body" style="height:260px">
+        <canvas id="chartBar"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Donut stock -->
+  <div class="col-lg-4">
+    <div class="viz-card">
+      <div class="viz-header">
+        <span><i class="bi bi-pie-chart me-2" style="color:var(--pbi-purple)"></i>Répartition stock</span>
+      </div>
+      <div class="viz-body d-flex flex-column align-items-center justify-content-center" style="height:260px">
+        <canvas id="chartDonut" style="max-height:180px"></canvas>
+        <div class="d-flex gap-4 mt-3">
+          <div class="text-center">
+            <div style="font-size:13px;font-weight:700;color:var(--pbi-blue)">{{ stock_dispo|floatformat:3 }} kg</div>
+            <div style="font-size:10px;color:#605e5c;text-transform:uppercase;letter-spacing:.4px">Disponible</div>
+          </div>
+          <div class="text-center">
+            <div style="font-size:13px;font-weight:700;color:var(--pbi-amber)">{{ total_envoye|floatformat:3 }} kg</div>
+            <div style="font-size:10px;color:#605e5c;text-transform:uppercase;letter-spacing:.4px">Transféré</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── TABLES ROW ───────────────────────────────────────────── -->
+<div class="row g-3">
+
+  <!-- Dernières réceptions -->
+  <div class="col-lg-6">
+    <div class="viz-card">
+      <div class="viz-header">
+        <span><i class="bi bi-truck me-2" style="color:var(--pbi-green)"></i>Dernières réceptions</span>
+        <a href="{% url 'reception_list' %}" style="font-size:11px;color:var(--pbi-blue);text-decoration:none;font-weight:600">
+          Voir tout <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+      <div class="viz-body p-0">
+        <table class="pbi-table">
+          <thead>
+            <tr>
+              <th class="ps-3">Fournisseur</th>
+              <th>Opérateur</th>
+              <th>Quantité</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in recent_receptions %}
+            <tr>
+              <td class="ps-3">
+                <a href="{% url 'reception_detail' r.id %}" style="color:var(--pbi-blue);text-decoration:none;font-weight:600">
+                  {{ r.fournisseur.nom|truncatechars:20 }}
+                </a>
+              </td>
+              <td style="color:#605e5c">{{ r.profile.matricule|default:"—" }}</td>
+              <td><span class="pill pill-success">{{ r.quantite|floatformat:3 }} kg</span></td>
+              <td style="color:#605e5c;font-size:12px">{{ r.date_reception|date:"d/m/Y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center py-4" style="color:#605e5c">Aucune réception</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Derniers transferts -->
+  <div class="col-lg-6">
+    <div class="viz-card">
+      <div class="viz-header">
+        <span><i class="bi bi-arrow-left-right me-2" style="color:var(--pbi-amber)"></i>Derniers transferts</span>
+        <a href="{% url 'transfert_list' %}" style="font-size:11px;color:var(--pbi-blue);text-decoration:none;font-weight:600">
+          Voir tout <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+      <div class="viz-body p-0">
+        <table class="pbi-table">
+          <thead>
+            <tr>
+              <th class="ps-3">Lot</th>
+              <th>Opérateur</th>
+              <th>Quantité</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in recent_transfers %}
+            <tr>
+              <td class="ps-3">
+                <a href="{% url 'transfert_detail' t.id %}" style="color:var(--pbi-blue);text-decoration:none;font-family:monospace;font-size:12px">
+                  {{ t.numero_lot }}
+                </a>
+              </td>
+              <td style="color:#605e5c">
+                {% if t.profile %}{{ t.profile.nom }} {{ t.profile.prenom|slice:":1" }}.{% else %}—{% endif %}
+              </td>
+              <td><span class="pill pill-warning">{{ t.quantite|floatformat:3 }} kg</span></td>
+              <td style="color:#605e5c;font-size:12px">{{ t.date_heure|date:"d/m/Y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center py-4" style="color:#605e5c">Aucun transfert</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  const BLUE   = '#0078d4';
+  const AMBER  = '#c19c00';
+  const PURPLE = '#8764b8';
+
+  /* ── Bar chart ── */
+  new Chart(document.getElementById('chartBar'), {
+    type: 'bar',
+    data: {
+      labels: {{ chart_labels|safe }},
+      datasets: [
+        {
+          label: 'Réceptions (kg)',
+          data:  {{ chart_rec|safe }},
+          backgroundColor: BLUE + 'bb',
+          borderColor: BLUE,
+          borderWidth: 1,
+          borderRadius: 3,
+        },
+        {
+          label: 'Transferts (kg)',
+          data:  {{ chart_trans|safe }},
+          backgroundColor: AMBER + 'bb',
+          borderColor: AMBER,
+          borderWidth: 1,
+          borderRadius: 3,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { boxWidth: 10, font: { size: 11 }, padding: 14 } },
+        tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y.toFixed(3)} kg` } }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: '#f3f2f1' },
+          ticks: { callback: v => v + ' kg', font: { size: 11 }, color: '#605e5c' },
+          border: { color: '#e1dfdd' }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 11 }, color: '#605e5c' },
+          border: { color: '#e1dfdd' }
+        }
+      }
+    }
+  });
+
+  /* ── Donut chart ── */
+  const dispo  = {{ donut_dispo|default:0 }};
+  const envoye = {{ donut_envoye|default:0 }};
+  new Chart(document.getElementById('chartDonut'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Disponible', 'Transféré'],
+      datasets: [{
+        data: [dispo, envoye],
+        backgroundColor: [BLUE + 'cc', AMBER + 'cc'],
+        borderColor: ['#fff', '#fff'],
+        borderWidth: 3,
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '68%',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed.toFixed(3)} kg` } }
+      }
+    }
+  });
+})();
+</script>
+
+{% endblock %}

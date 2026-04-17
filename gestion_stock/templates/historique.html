@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}Historique Consommation{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-hd">
+  <div>
+    <p class="page-hd-eyebrow">Production · Historique</p>
+    <h1 class="page-hd-title">
+      <i class="bi bi-clock-history" style="color: var(--prod);"></i>
+      Historique consommation
+      <span class="count-pill count-pill-prod">{{ ouvertures|length }}</span>
+    </h1>
+    <p class="page-hd-sub">Liste des ouvertures de lots enregistrées</p>
+  </div>
+  <div class="page-hd-actions">
+    <a href="{% url 'production:nouvelle_production' %}" class="btn btn-warning">
+      <i class="bi bi-plus-circle"></i> Nouvelle production
+    </a>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+  <div class="search-container">
+    <i class="bi bi-search search-icon"></i>
+    <input type="text" id="searchInput" class="form-control search-input" placeholder="Rechercher lot, opérateur, produit…">
+  </div>
+  <select class="form-select" id="shiftFilter" style="width:auto; height:36px; font-size:13px;">
+    <option value="">Tous les shifts</option>
+    <option value="matin">Matin</option>
+    <option value="soir">Soir</option>
+    <option value="nuit">Nuit</option>
+  </select>
+  <button class="btn btn-sm" style="background:var(--prod); color:white;" onclick="filterTable()">
+    <i class="bi bi-funnel"></i> Filtrer
+  </button>
+</div>
+
+<!-- Table -->
+<div class="data-card">
+  <div class="data-card-header">
+    <span class="data-card-title">
+      <i class="bi bi-table" style="color:var(--text-muted);"></i>
+      Toutes les ouvertures
+    </span>
+  </div>
+
+  <table class="tbl" id="historiqueTable">
+    <thead>
+      <tr>
+        <th>Date / Heure</th>
+        <th>Opérateur</th>
+        <th>Ligne</th>
+        <th>Lot consommé</th>
+        <th>OF</th>
+        <th>Produit</th>
+        <th>Qté (kg)</th>
+        <th>Shift</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for o in ouvertures %}
+      <tr>
+        <td style="color:var(--text-muted); font-size:12px;">
+          {{ o.date_heure_ouverture|date:"d/m/Y" }}<br>
+          <span style="font-size:11px;">{{ o.date_heure_ouverture|date:"H:i" }}</span>
+        </td>
+        <td>
+          <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">
+            {{ o.profile.nom }} {{ o.profile.prenom }}
+          </span>
+        </td>
+        <td>
+          <span class="badge" style="background:#f1f5f9; color:var(--text-secondary); border:1px solid var(--border); font-weight:600;">
+            {{ o.ligne_production }}
+          </span>
+        </td>
+        <td><span class="tbl-lot">{{ o.numero_lot }}</span></td>
+        <td style="font-size:12px; color:var(--text-secondary);">{{ o.numero_ordre_fabrication }}</td>
+        <td style="font-weight:500;">{{ o.nom_produit }}</td>
+        <td>
+          <span class="tbl-qty" style="color:var(--prod);">{{ o.quantite|floatformat:3 }} <small style="font-weight:400; color:var(--text-muted);">kg</small></span>
+        </td>
+        <td>
+          <span class="badge" style="background:var(--prod-light); color:var(--prod); border:1px solid #fde68a;">
+            {{ o.shift }}
+          </span>
+        </td>
+        <td>
+          <div class="tbl-actions">
+            <a href="{% url 'production:ouverture_detail' o.pk %}" class="btn-icon btn-icon-info" title="Détails">
+              <i class="bi bi-eye"></i>
+            </a>
+            {% if request.user.profile.type_operateur == 'admin' %}
+            <a href="{% url 'production:ouverture_update' o.pk %}" class="btn-icon btn-icon-warning" title="Modifier">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="{% url 'production:ouverture_delete' o.pk %}" class="btn-icon btn-icon-danger" title="Supprimer">
+              <i class="bi bi-trash"></i>
+            </a>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="9">
+          <div class="empty-state">
+            <i class="bi bi-inbox empty-state-icon"></i>
+            <p class="empty-state-title">Aucune production enregistrée</p>
+            <p class="empty-state-sub">Les ouvertures de lots apparaîtront ici après enregistrement</p>
+            <a href="{% url 'production:nouvelle_production' %}" class="btn btn-warning">
+              <i class="bi bi-plus-circle"></i> Nouvelle production
+            </a>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+function filterTable() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const shift = document.getElementById('shiftFilter').value.toLowerCase();
+  document.querySelectorAll('#historiqueTable tbody tr').forEach(row => {
+    const text = row.textContent.toLowerCase();
+    const matchQ = !q || text.includes(q);
+    const matchS = !shift || text.includes(shift);
+    row.style.display = (matchQ && matchS) ? '' : 'none';
+  });
+}
+document.getElementById('searchInput').addEventListener('input', filterTable);
+document.getElementById('shiftFilter').addEventListener('change', filterTable);
+</script>
+{% endblock %}

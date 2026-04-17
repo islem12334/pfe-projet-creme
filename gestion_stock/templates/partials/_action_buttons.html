@@ -1,0 +1,4 @@
+{% if request.user.is_superuser or request.user.profile.type == "Administrateur" %}
+  <a href="{% url 'modifier_reception' object.id %}" class="btn btn-warning">Modifier</a>
+  <a href="{% url 'supprimer_reception' object.id %}" class="btn btn-danger" onclick="return confirm('Confirmer la suppression ?')">Supprimer</a>
+{% endif %}

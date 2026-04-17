@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profile Production{% endblock %}
+
+{% block content %}
+<div class="container my-5" style="max-width: 1000px;">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="mb-2">
+        <i class="bi bi-people text-primary me-2"></i>
+        Équipe Production
+      </h1>
+      <p class="text-muted">Opérateurs de type "production" uniquement</p>
+    </div>
+<a href="/admin/gestion_stock/profile/?type_operateur=production" class="btn btn-primary btn-lg" target="_blank">
+      <i class="bi bi-gear me-2"></i>Gérer dans Admin
+    </a>
+  </div>
+
+  {% if profiles %}
+  <div class="card shadow-lg border-0">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Matricule</th>
+            <th>Nom Complet</th>
+            <th>Type</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for profile in profiles %}
+          <tr>
+            <td>
+              <code class="bg-light px-3 py-2 rounded-pill fw-semibold">{{ profile.matricule }}</code>
+            </td>
+            <td class="fw-bold">{{ profile.nom }} {{ profile.prenom }}</td>
+            <td>
+              <span class="badge bg-warning text-dark rounded-pill px-3 py-1 fw-semibold">
+                Production
+              </span>
+            </td>
+            <td>
+              <div class="btn-group" role="group">
+                <a href="#" class="btn btn-outline-primary btn-sm">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="/admin/gestion_stock/profile/{{ profile.id }}/change/" class="btn btn-outline-secondary btn-sm" target="_blank">
+                  <i class="bi bi-pencil"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="text-center py-8 bg-light rounded-3 p-5">
+    <i class="bi bi-people-slash display-1 text-muted mb-4 opacity-50"></i>
+    <h3 class="text-muted mb-3">Aucun opérateur production trouvé</h3>
+    <p class="text-muted mb-4 lead">Créez des opérateurs de type "production" dans Django Admin</p>
+  <a href="/admin/gestion_stock/profile/add/?type_operateur=production" class="btn btn-warning btn-lg" target="_blank">
+      <i class="bi bi-plus-circle me-2"></i>Ajouter Opérateur Production
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+

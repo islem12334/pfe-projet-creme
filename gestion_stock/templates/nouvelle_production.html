@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}Nouvelle Production{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-hd">
+  <div>
+    <p class="page-hd-eyebrow">Production · Opérations</p>
+    <h1 class="page-hd-title">
+      <i class="bi bi-play-circle" style="color:var(--prod);"></i>
+      Nouvelle ouverture
+    </h1>
+    <p class="page-hd-sub">Déclaration de consommation de lot</p>
+  </div>
+  <div class="page-hd-actions">
+    <a href="{% url 'production:index' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Dashboard
+    </a>
+  </div>
+</div>
+
+<div class="row g-4 justify-content-center">
+
+  <!-- Main Form -->
+  <div class="col-lg-8 col-xl-7">
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-3" role="alert" style="font-size:13px;">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-card">
+        <!-- Card Header -->
+        <div class="form-card-header production">
+          <div class="form-card-icon"><i class="bi bi-play-circle"></i></div>
+          <div>
+            <p class="form-card-title">Ouverture de production</p>
+            <p class="form-card-sub">Enregistrez la consommation d'un lot en atelier</p>
+          </div>
+        </div>
+
+        <div class="form-card-body">
+
+          <!-- Section 1: Identification -->
+          <div class="form-section">
+            <div class="form-section-label" style="--brand: var(--prod);">
+              <i class="bi bi-person-badge" style="color:var(--prod);"></i>
+              Identification
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="bi bi-person-badge me-1" style="color:var(--prod);"></i>
+                  Opérateur production
+                </label>
+                {{ form.operateur_production }}
+                {% if form.operateur_production.errors %}
+                  <div style="color:var(--danger); font-size:12px; margin-top:4px;">{{ form.operateur_production.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="bi bi-factory me-1" style="color:var(--prod);"></i>
+                  Ligne de production
+                </label>
+                {{ form.ligne_production }}
+                {% if form.ligne_production.errors %}
+                  <div style="color:var(--danger); font-size:12px; margin-top:4px;">{{ form.ligne_production.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="bi bi-clock me-1" style="color:var(--info);"></i>
+                  Date / Heure ouverture
+                </label>
+                {{ form.date_heure_ouverture }}
+                {% if form.date_heure_ouverture.errors %}
+                  <div style="color:var(--danger); font-size:12px; margin-top:4px;">{{ form.date_heure_ouverture.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="bi bi-upc-scan me-1" style="color:var(--brand);"></i>
+                  Lot consommé
+                </label>
+                {{ form.numero_lot }}
+                {% if form.numero_lot.help_text %}
+                  <p class="form-text">{{ form.numero_lot.help_text }}</p>
+                {% endif %}
+                {% if form.numero_lot.errors %}
+                  <div style="color:var(--danger); font-size:12px; margin-top:4px;">{{ form.numero_lot.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Production -->
+          <div class="form-section">
+            <div class="form-section-label">
+              <i class="bi bi-box-seam" style="color:var(--prod);"></i>
+              Détails de production
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="bi bi-hash me-1" style="color:var(--text-muted);"></i>
+                  OF (Ordre de fabrication)
+                </label>
+                {{ form.numero_ordre_fabrication }}
+                {% if form.numero_ordre_fabrication.errors %}
+                  <div style="color:var(--danger); font-size:12px; margin-top:4px;">{{ form.numero_ordre_fabrication.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="bi bi-box-seam me-1" style="color:var(--success);"></i>
+                  Produit fabriqué
+                </label>
+                {{ form.nom_produit }}
+                {% if form.nom_produit.errors %}
+                  <div style="color:var(--danger); font-size:12px; margin-top:4px;">{{ form.nom_produit.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-8">
+                <label class="form-label">
+                  <i class="bi bi-speedometer2 me-1" style="color:var(--danger);"></i>
+                  Quantité consommée (kg)
+                </label>
+                {{ form.quantite }}
+                {% if form.quantite.help_text %}
+                  <p class="form-text">{{ form.quantite.help_text }}</p>
+                {% endif %}
+                {% if form.quantite.errors %}
+                  <div style="color:var(--danger); font-size:12px; margin-top:4px;">{{ form.quantite.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">
+                  <i class="bi bi-clock me-1" style="color:var(--info);"></i>
+                  Shift / Poste
+                </label>
+                {{ form.shift }}
+                {% if form.shift.errors %}
+                  <div style="color:var(--danger); font-size:12px; margin-top:4px;">{{ form.shift.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /form-card-body -->
+
+        <!-- Form Footer -->
+        <div class="form-card-footer">
+          <a href="{% url 'production:index' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-x"></i> Annuler
+          </a>
+          <button type="submit" class="btn btn-lg" style="background:var(--prod); color:white; border-color:var(--prod); padding:10px 28px;">
+            <i class="bi bi-check-lg"></i> Valider la production
+          </button>
+        </div>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Help Sidebar -->
+  <div class="col-lg-4 col-xl-3">
+    <div class="help-card">
+      <div class="help-card-header">
+        <i class="bi bi-lightbulb" style="color:var(--prod);"></i>
+        Guide de saisie
+      </div>
+      <div class="help-card-body">
+        <ol class="help-steps">
+          <li>Sélectionner l'opérateur et la ligne</li>
+          <li>Indiquer la date et l'heure d'ouverture</li>
+          <li>Saisir le numéro de lot consommé</li>
+          <li>Compléter l'OF et le produit fabriqué</li>
+          <li>Saisir la quantité exacte et le shift</li>
+        </ol>
+        <div style="background:var(--prod-light); border-radius:var(--r-md); padding:12px; border:1px solid #fde68a;">
+          <div style="font-size:12px; font-weight:600; color:var(--prod); margin-bottom:4px;">
+            <i class="bi bi-check-circle me-1"></i> Stock automatique
+          </div>
+          <p style="font-size:12px; color:var(--text-secondary); margin:0;">
+            Le stock disponible est mis à jour automatiquement après validation.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
