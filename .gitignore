@@ -12,7 +12,13 @@ db.sqlite3
 db.sqlite3-journal
 staticfiles/
 
-# Environment
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# Environment variables
 .env
 .env.*
 !.env.example
@@ -20,10 +26,8 @@ staticfiles/
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
 *.lnk
