@@ -15,6 +15,9 @@
       <button onclick="window.print()" class="btn btn-outline-secondary">
         <i class="bi bi-printer me-1"></i>Imprimer
       </button>
+      <a href="{% url 'reception_export_excel' reception.id %}" class="btn btn-success">
+        <i class="bi bi-file-earmark-excel me-1"></i>Exporter Excel
+      </a>
       {% if request.user.profile.type_operateur == 'admin' %}
       <a href="{% url 'reception_update' reception.id %}" class="btn btn-warning">
         <i class="bi bi-pencil"></i> Modifier
@@ -74,6 +77,7 @@
             <th>#</th>
             <th>ID Canonique</th>
             <th>Code Lot réel</th>
+            <th class="text-end">Quantité (kg)</th>
           </tr>
         </thead>
         <tbody>
@@ -82,11 +86,26 @@
             <td><span class="badge bg-secondary">{{ lot.index }}</span></td>
             <td><code>{{ lot.canonical }}</code></td>
             <td><strong>{{ lot.code }}</strong></td>
+            <td class="text-end fw-bold" style="color:var(--brand, #2563eb);">
+              {% if lot.quantite %}
+                {{ lot.quantite|floatformat:3 }} kg
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
           </tr>
           {% empty %}
-          <tr><td colspan="3" class="text-center text-muted py-3">Aucun lot saisi</td></tr>
+          <tr><td colspan="4" class="text-center text-muted py-3">Aucun lot saisi</td></tr>
           {% endfor %}
         </tbody>
+        {% if lots %}
+        <tfoot class="table-light fw-bold">
+          <tr>
+            <td colspan="3" class="text-end">Total</td>
+            <td class="text-end">{{ reception.quantite|floatformat:3 }} kg</td>
+          </tr>
+        </tfoot>
+        {% endif %}
       </table>
 
       <!-- Signatures impression -->
@@ -108,59 +127,81 @@
   </div>
 </div>
 
+<div class="ticket-preview">
+  {% for lot in lots %}
+  <div class="ticket">
+    <div class="ticket-rec">Réc. N°{{ reception.id }} · {{ reception.date_reception|date:"d/m/Y" }}</div>
+    <div class="ticket-id">{{ lot.canonical }}</div>
+    <div class="ticket-code">{{ lot.code }}</div>
+    <div class="ticket-info">
+      {% if lot.quantite %}<span>{{ lot.quantite|floatformat:3 }} kg</span> · {% endif %}
+      <span>Exp : {{ reception.date_expiration|date:"d/m/Y" }}</span>
+    </div>
+    <div class="ticket-fournisseur">{{ reception.fournisseur.nom }}</div>
+  </div>
+  {% endfor %}
+</div>
+
 <style>
-.print-only { display: none; }
 .ticket-preview { display: none; }
+.print-only { display: none; }
 
 @media print {
   body * { visibility: hidden; }
-  .ticket-preview, .ticket-preview * { visibility: visible; }
+  .ticket-preview,
+  .ticket-preview * { visibility: visible; }
   .ticket-preview {
-    display: block !important;
-    position: absolute;
-    left: 0;
+    position: fixed;
     top: 0;
-    margin: 0;
-    padding: 0;
+    left: 0;
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 4mm;
+    padding: 5mm;
+    background: white;
+    width: 100%;
   }
   .ticket {
-    width: 5.2cm;
-    height: 2.6cm;
-    border: 1px solid #000;
+    width: 80mm;
+    min-height: 40mm;
+    border: 1.5px solid #000;
+    border-radius: 3px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    page-break-after: always;
-    padding: 0.2cm;
+    padding: 3mm 4mm;
     text-align: center;
     box-sizing: border-box;
+    page-break-inside: avoid;
   }
-  .ticket:last-child {
-    page-break-after: avoid;
+  .ticket-rec {
+    font-size: 7pt;
+    color: #555;
+    margin-bottom: 1mm;
   }
   .ticket-id {
-    font-size: 12pt;
+    font-size: 13pt;
     font-weight: bold;
     font-family: monospace;
     letter-spacing: 1px;
   }
   .ticket-code {
-    font-size: 10pt;
+    font-size: 11pt;
     font-weight: bold;
-    font-family: monospace;
-    margin-top: 4px;
+    margin-top: 1.5mm;
+  }
+  .ticket-info {
+    font-size: 8pt;
+    color: #333;
+    margin-top: 1.5mm;
+  }
+  .ticket-fournisseur {
+    font-size: 7pt;
+    color: #666;
+    margin-top: 1mm;
+    font-style: italic;
   }
 }
 </style>
-
-<!-- Tickets pour impression uniquement -->
-<div class="ticket-preview">
-  {% for lot in lots %}
-  <div class="ticket">
-    <div class="ticket-id">{{ lot.canonical }}</div>
-    <div class="ticket-code">{{ lot.code }}</div>
-  </div>
-  {% endfor %}
-</div>
 {% endblock %}

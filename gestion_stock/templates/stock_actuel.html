@@ -33,9 +33,9 @@
   </div>
 </div>
 
-{% if total_stock %}
-<!-- KPI Total -->
+<!-- KPI Cards -->
 <div class="row g-3 mb-4">
+  {% if total_stock %}
   <div class="col-auto">
     <div class="data-card" style="padding:16px 24px; display:inline-flex; align-items:center; gap:14px;">
       <div style="width:42px; height:42px; border-radius:var(--r-md); background:#dcfce7; display:flex; align-items:center; justify-content:center;">
@@ -47,8 +47,42 @@
       </div>
     </div>
   </div>
+  {% endif %}
+
+  <!-- Qté expirée -->
+  <div class="col-auto">
+    <div class="data-card" style="padding:16px 24px; display:inline-flex; align-items:center; gap:14px; border-left:3px solid #dc2626;">
+      <div style="width:42px; height:42px; border-radius:var(--r-md); background:#fee2e2; display:flex; align-items:center; justify-content:center;">
+        <i class="bi bi-x-circle-fill" style="font-size:18px; color:#dc2626;"></i>
+      </div>
+      <div>
+        <div style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--text-muted); margin-bottom:2px;">Qté Expirée</div>
+        {% if quantite_expiree %}
+        <div style="font-size:22px; font-weight:700; color:#dc2626; line-height:1.1;">{{ quantite_expiree|floatformat:3 }} <span style="font-size:13px; font-weight:500; color:var(--text-muted);">kg</span></div>
+        {% else %}
+        <div style="font-size:22px; font-weight:700; color:#15803d; line-height:1.1;">✓ <span style="font-size:13px; font-weight:500; color:var(--text-muted);">Aucun</span></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Qté avertissement -->
+  <div class="col-auto">
+    <div class="data-card" style="padding:16px 24px; display:inline-flex; align-items:center; gap:14px; border-left:3px solid #d97706;">
+      <div style="width:42px; height:42px; border-radius:var(--r-md); background:#fef3c7; display:flex; align-items:center; justify-content:center;">
+        <i class="bi bi-exclamation-triangle-fill" style="font-size:18px; color:#d97706;"></i>
+      </div>
+      <div>
+        <div style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--text-muted); margin-bottom:2px;">Avertissement ≤7j</div>
+        {% if quantite_warning %}
+        <div style="font-size:22px; font-weight:700; color:#d97706; line-height:1.1;">{{ quantite_warning|floatformat:3 }} <span style="font-size:13px; font-weight:500; color:var(--text-muted);">kg</span></div>
+        {% else %}
+        <div style="font-size:22px; font-weight:700; color:#15803d; line-height:1.1;">✓ <span style="font-size:13px; font-weight:500; color:var(--text-muted);">Aucun</span></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 </div>
-{% endif %}
 
 <!-- Stock Table -->
 <div class="data-card">

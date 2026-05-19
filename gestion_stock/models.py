@@ -22,9 +22,9 @@ class Profile(models.Model):
         return f"{self.matricule} - {self.nom} {self.prenom}"
 
     def save(self, *args, **kwargs):
-        # Create User + strong password manually in /admin/auth/user/ first
-        if self.user:
-            self.user.username = self.matricule
+        # Keep User.username in sync with matricule (persist to DB directly to avoid signal loops)
+        if self.user_id and self.matricule:
+            User.objects.filter(pk=self.user_id).update(username=self.matricule)
         super().save(*args, **kwargs)
 
 class Fournisseur(models.Model):
@@ -41,9 +41,9 @@ class Reception(models.Model):
     fournisseur = models.ForeignKey(Fournisseur, on_delete=models.CASCADE)
     date_reception = models.DateTimeField(auto_now_add=True)
 
-    lot_code1 = models.CharField(max_length=50)
-    lot_code2 = models.CharField(max_length=50)
-    lot_code3 = models.CharField(max_length=50)
+    lot_code1 = models.CharField(max_length=50, blank=True, default='')
+    lot_code2 = models.CharField(max_length=50, blank=True, default='')
+    lot_code3 = models.CharField(max_length=50, blank=True, default='')
     lot_code4 = models.CharField(max_length=50, blank=True, default='')
     lot_code5 = models.CharField(max_length=50, blank=True, default='')
     lot_code6 = models.CharField(max_length=50, blank=True, default='')
@@ -89,6 +89,17 @@ class Reception(models.Model):
         ]
 
 
+class LotReception(models.Model):
+    reception = models.ForeignKey(Reception, on_delete=models.CASCADE, related_name='lots')
+    code = models.CharField(max_length=50)
+    quantite = models.DecimalField(max_digits=10, decimal_places=3, default=Decimal('0'))
+    ordre = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ['ordre']
+        unique_together = [('reception', 'ordre')]
+
+
 class SortieStockProduction(models.Model):
     profile = models.ForeignKey('Profile', on_delete=models.CASCADE, related_name='sorties')
     date_heure = models.DateTimeField(auto_now_add=True)
@@ -113,9 +124,9 @@ class OuvertureProduction(models.Model):
     ligne_production = models.CharField(max_length=100)
     date_heure_ouverture = models.DateTimeField()
     numero_lot = models.CharField(max_length=50)
-    numero_ordre_fabrication = models.CharField(max_length=100)
+    numero_ordre_fabrication = models.CharField(max_length=100, unique=True)
     nom_produit = models.CharField(max_length=150)
-    quantite = models.DecimalField(max_digits=10, decimal_places=3, default=Decimal('0.500'))
+    quantite = models.IntegerField(default=1)
     shift = models.CharField(max_length=2, choices=SHIFT_CHOICES)
 
     def __str__(self):

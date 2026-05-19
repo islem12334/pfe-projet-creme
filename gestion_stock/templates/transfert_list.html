@@ -100,7 +100,9 @@
           <span class="tbl-qty" style="color:var(--warning);">{{ sortie.quantite|floatformat:3 }} <small style="font-weight:400; color:var(--text-muted);">kg</small></span>
         </td>
         <td style="font-size:12px; color:var(--text-secondary);">
-          {{ sortie.expiration_info.date|default:"—" }}
+          {% if sortie.expiration_info.date_expiration %}
+            {{ sortie.expiration_info.date_expiration|date:"d/m/Y" }}
+          {% else %}—{% endif %}
         </td>
         <td>
           {% if sortie.expiration_info.status == 'expired' %}

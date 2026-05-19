@@ -5,292 +5,454 @@
 
 {% block extra_css %}
 <style>
-/* ── Power BI palette ─────────────────────────── */
+/* ══════════════════════════════════════════════════════
+   DESIGN SYSTEM — Enterprise BI
+══════════════════════════════════════════════════════ */
 :root {
-  --pbi-blue:   #0078d4;
-  --pbi-green:  #107c10;
-  --pbi-amber:  #c19c00;
-  --pbi-red:    #a80000;
-  --pbi-purple: #8764b8;
-  --pbi-bg:     #f3f2f1;
-  --pbi-card:   #ffffff;
-  --pbi-border: #e1dfdd;
-  --pbi-text:   #323130;
-  --pbi-muted:  #605e5c;
+  --c-blue:    #2563eb;
+  --c-blue-lt: #eff6ff;
+  --c-blue-dk: #1d4ed8;
+  --c-green:   #059669;
+  --c-green-lt:#ecfdf5;
+  --c-amber:   #d97706;
+  --c-amber-lt:#fffbeb;
+  --c-red:     #dc2626;
+  --c-red-lt:  #fef2f2;
+  --c-purple:  #7c3aed;
+  --c-purple-lt:#f5f3ff;
+  --c-bg:      #f1f5f9;
+  --c-card:    #ffffff;
+  --c-border:  #e2e8f0;
+  --c-text:    #0f172a;
+  --c-muted:   #64748b;
+  --c-light:   #94a3b8;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.08);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.12);
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
 }
 
-body { background: var(--pbi-bg) !important; }
+body { background: var(--c-bg) !important; }
 
-/* ── KPI cards ────────────────────────────────── */
-.kpi-card {
-  background: var(--pbi-card);
-  border: 1px solid var(--pbi-border);
-  border-radius: 4px;
-  padding: 20px 22px;
-  border-left: 4px solid transparent;
-  transition: box-shadow .15s;
-  height: 100%;
-}
-.kpi-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.10); }
-.kpi-card.blue   { border-left-color: var(--pbi-blue); }
-.kpi-card.green  { border-left-color: var(--pbi-green); }
-.kpi-card.amber  { border-left-color: var(--pbi-amber); }
-.kpi-card.red    { border-left-color: var(--pbi-red); }
-.kpi-card.purple { border-left-color: var(--pbi-purple); }
-
-.kpi-label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .6px;
-  color: var(--pbi-muted);
-  margin-bottom: 6px;
-}
-.kpi-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--pbi-text);
-  line-height: 1.1;
-  margin-bottom: 6px;
-}
-.kpi-sub {
-  font-size: 12px;
-  color: var(--pbi-muted);
-}
-.trend-up   { color: var(--pbi-green); font-size: 12px; font-weight: 600; }
-.trend-down { color: var(--pbi-red);   font-size: 12px; font-weight: 600; }
-
-/* ── Visual cards ─────────────────────────────── */
-.viz-card {
-  background: var(--pbi-card);
-  border: 1px solid var(--pbi-border);
-  border-radius: 4px;
-  height: 100%;
-}
-.viz-header {
-  padding: 14px 18px 8px;
-  border-bottom: 1px solid var(--pbi-border);
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  color: var(--pbi-muted);
+/* ── Header Banner ─────────────────────────────────── */
+.db-header {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #1e40af 100%);
+  border-radius: var(--r-lg);
+  padding: 18px 26px;
+  margin-bottom: 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
 }
-.viz-body { padding: 16px 18px; }
-
-/* ── Progress bar ─────────────────────────────── */
-.util-bar { height: 8px; border-radius: 4px; background: #edebe9; overflow: hidden; }
-.util-fill { height: 100%; border-radius: 4px; background: var(--pbi-blue);
-             transition: width .6s ease; }
-
-/* ── Table ────────────────────────────────────── */
-.pbi-table { width: 100%; font-size: 13px; border-collapse: collapse; }
-.pbi-table thead tr { border-bottom: 2px solid var(--pbi-border); }
-.pbi-table thead th { padding: 8px 10px; font-weight: 600; color: var(--pbi-muted);
-                      font-size: 11px; text-transform: uppercase; letter-spacing: .4px; }
-.pbi-table tbody tr { border-bottom: 1px solid #f3f2f1; transition: background .1s; }
-.pbi-table tbody tr:hover { background: #f8f7f6; }
-.pbi-table tbody td { padding: 9px 10px; color: var(--pbi-text); }
-
-/* ── Alert strip ──────────────────────────────── */
-.alert-strip {
-  border-radius: 4px;
-  padding: 10px 16px;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border: none;
+.db-header::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(255,255,255,.06) 0%, transparent 70%);
+  border-radius: 50%;
 }
-.alert-strip.danger  { background: #fde7e9; color: #a80000; }
-.alert-strip.warning { background: #fff4ce; color: #7a4f00; }
+.db-header::after {
+  content: '';
+  position: absolute;
+  bottom: -60px; left: 40%;
+  width: 280px; height: 280px;
+  background: radial-gradient(circle, rgba(37,99,235,.25) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.db-header-left { position: relative; z-index: 1; }
+.db-eyebrow {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.2px; color: #93c5fd; margin-bottom: 3px;
+  display: flex; align-items: center; gap: 6px;
+}
+.db-title {
+  font-size: 22px; font-weight: 800; color: #ffffff;
+  letter-spacing: -.5px; margin: 0; line-height: 1.2;
+}
+.db-subtitle { font-size: 11.5px; color: #94a3b8; margin-top: 3px; }
+.db-header-right { position: relative; z-index: 1; }
+.db-date-chip {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 20px;
+  padding: 5px 13px;
+  font-size: 12px; color: #e2e8f0;
+  display: flex; align-items: center; gap: 6px;
+}
+.db-date-chip i { color: #93c5fd; font-size: 12px; }
 
-/* ── Badge pill ───────────────────────────────── */
-.pill {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
+/* ── KPI Cards ─────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 22px;
+}
+@media (max-width: 991px)  { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 575px)  { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.kpi-card {
+  background: var(--c-card);
+  border-radius: var(--r-md);
+  padding: 18px 16px 14px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--c-border);
+  transition: box-shadow .25s ease, transform .25s ease;
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+}
+.kpi-card-glow {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: var(--r-md) var(--r-md) 0 0;
+}
+.kpi-card-glow.blue   { background: linear-gradient(90deg, var(--c-blue), #60a5fa); }
+.kpi-card-glow.green  { background: linear-gradient(90deg, var(--c-green), #34d399); }
+.kpi-card-glow.amber  { background: linear-gradient(90deg, var(--c-amber), #fbbf24); }
+.kpi-card-glow.red    { background: linear-gradient(90deg, var(--c-red), #f87171); }
+.kpi-card-glow.purple { background: linear-gradient(90deg, var(--c-purple), #a78bfa); }
+
+.kpi-icon {
+  width: 38px; height: 38px;
   border-radius: 10px;
-  margin-right: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  margin-bottom: 12px;
 }
-.pill-danger  { background: #fde7e9; color: #a80000; }
-.pill-warning { background: #fff4ce; color: #7a4f00; }
-.pill-success { background: #dff6dd; color: #107c10; }
-.pill-blue    { background: #deecf9; color: #0078d4; }
+.kpi-icon.blue   { background: var(--c-blue-lt);   color: var(--c-blue); }
+.kpi-icon.green  { background: var(--c-green-lt);  color: var(--c-green); }
+.kpi-icon.amber  { background: var(--c-amber-lt);  color: var(--c-amber); }
+.kpi-icon.red    { background: var(--c-red-lt);    color: var(--c-red); }
+.kpi-icon.purple { background: var(--c-purple-lt); color: var(--c-purple); }
+
+.kpi-label {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .8px;
+  color: var(--c-light); margin-bottom: 4px;
+}
+.kpi-value {
+  font-size: 22px; font-weight: 800;
+  line-height: 1.15; letter-spacing: -.4px;
+  margin-bottom: 8px;
+}
+.kpi-unit { font-size: 11px; font-weight: 500; color: var(--c-light); margin-left: 2px; }
+.kpi-footer {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--c-muted);
+  border-top: 1px solid #f1f5f9;
+  padding-top: 8px; margin-top: 4px;
+}
+.badge-up   { background: #dcfce7; color: #15803d; padding: 2px 7px; border-radius: 20px; font-size: 10.5px; font-weight: 700; }
+.badge-down { background: #fee2e2; color: #b91c1c; padding: 2px 7px; border-radius: 20px; font-size: 10.5px; font-weight: 700; }
+.badge-ok   { background: #dcfce7; color: #15803d; padding: 2px 7px; border-radius: 20px; font-size: 10.5px; font-weight: 700; }
+
+.util-track { height: 5px; border-radius: 3px; background: #e2e8f0; overflow: hidden; margin-top: 8px; }
+.util-fill  { height: 100%; border-radius: 3px; transition: width 1s cubic-bezier(.4,0,.2,1); }
+
+/* ── Viz Cards (Charts + Tables) ───────────────────── */
+.viz-card {
+  background: var(--c-card);
+  border-radius: var(--r-md);
+  border: 1px solid var(--c-border);
+  box-shadow: var(--shadow-sm);
+  height: 100%;
+  overflow: hidden;
+}
+.viz-card-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.viz-card-title {
+  font-size: 13px; font-weight: 700; color: var(--c-text);
+  display: flex; align-items: center; gap: 8px;
+}
+.viz-card-title .icon-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block;
+}
+.viz-card-action {
+  font-size: 11.5px; font-weight: 600; color: var(--c-blue);
+  text-decoration: none;
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 6px;
+  transition: background .15s;
+}
+.viz-card-action:hover { background: var(--c-blue-lt); color: var(--c-blue-dk); }
+.viz-body { padding: 18px 20px; }
+.viz-body-flush { padding: 0; }
+
+/* ── Data Table ────────────────────────────────────── */
+.dt { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dt thead tr { border-bottom: 1px solid #f1f5f9; }
+.dt thead th {
+  padding: 10px 14px; font-size: 10.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .6px;
+  color: var(--c-light); background: #fafafa;
+}
+.dt tbody tr { border-bottom: 1px solid #f8fafc; transition: background .12s; }
+.dt tbody tr:last-child { border-bottom: none; }
+.dt tbody tr:hover { background: #f8fafc; }
+.dt tbody td { padding: 11px 14px; color: var(--c-text); vertical-align: middle; }
+.dt-badge {
+  display: inline-flex; align-items: center;
+  font-size: 11px; font-weight: 600;
+  padding: 3px 9px; border-radius: 6px; gap: 4px;
+}
+.dt-badge.green  { background: #dcfce7; color: #15803d; }
+.dt-badge.amber  { background: #fef3c7; color: #92400e; }
+.dt-badge.blue   { background: #dbeafe; color: #1e40af; }
+.dt-lot { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+          color: var(--c-blue); font-weight: 600; }
+.dt-meta { font-size: 11.5px; color: var(--c-muted); }
+
+/* ── Legend chips ───────────────────────────────────── */
+.legend-chip {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11.5px; color: var(--c-muted); font-weight: 500;
+}
+.legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+/* ── Pill badges ────────────────────────────────────── */
+.pill { display: inline-block; font-size: 11px; font-weight: 600;
+        padding: 2px 8px; border-radius: 10px; margin-right: 4px; }
+.pill-danger  { background: #fee2e2; color: #b91c1c; }
+.pill-warning { background: #fef3c7; color: #92400e; }
+.pill-success { background: #dcfce7; color: #15803d; }
+.pill-blue    { background: #dbeafe; color: #1e40af; }
 </style>
 {% endblock %}
 
 {% block content %}
 
-<!-- ── HEADER ──────────────────────────────────────────────── -->
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <div>
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#605e5c;">
-      Magasin · Gestion Stock
+<!-- ══ HEADER ══════════════════════════════════════════════════ -->
+<div class="db-header">
+  <div class="db-header-left">
+    <div class="db-eyebrow">
+      <i class="bi bi-bar-chart-fill"></i>
+      Vue d'ensemble en temps réel
     </div>
-    <h1 style="font-size:22px;font-weight:700;color:#323130;margin:2px 0 0;">
-      Tableau de bord
-    </h1>
+    <h1 class="db-title">Tableau de bord</h1>
+    <div class="db-subtitle">Réceptions · Transferts · Alertes expiration</div>
   </div>
-  <div style="font-size:12px;color:#605e5c;">
-    <i class="bi bi-calendar3 me-1"></i>
-    {% now "d/m/Y" %} &nbsp;
-    {% if current_profile %}
-      · <strong>{{ current_profile.nom }} {{ current_profile.prenom }}</strong>
-    {% endif %}
+  <div class="db-header-right">
+    <div class="db-date-chip">
+      <i class="bi bi-calendar3"></i>
+      {% now "l d/m/Y" %}
+    </div>
   </div>
 </div>
 
-<!-- ── ALERTES ─────────────────────────────────────────────── -->
-{% if lots_expires_count or lots_warning_count %}
-<div class="d-flex flex-wrap gap-2 mb-3">
-  {% if lots_expires_count %}
-  <div class="alert-strip danger flex-fill">
-    <i class="bi bi-x-circle-fill"></i>
-    <strong>{{ lots_expires_count }} expirée{{ lots_expires_count|pluralize }}</strong>
-    <span style="opacity:.7">—</span>
-    {% for r in lots_expires_list %}
-      <span class="pill pill-danger">{{ r.fournisseur.nom }} {{ r.date_expiration|date:"d/m/Y" }}</span>
-    {% endfor %}
-  </div>
-  {% endif %}
-  {% if lots_warning_count %}
-  <div class="alert-strip warning flex-fill">
-    <i class="bi bi-exclamation-triangle-fill"></i>
-    <strong>{{ lots_warning_count }} expire dans ≤ 7j</strong>
-    <span style="opacity:.7">—</span>
-    {% for r in lots_warning_list %}
-      <span class="pill pill-warning">{{ r.fournisseur.nom }} {{ r.date_expiration|date:"d/m/Y" }}</span>
-    {% endfor %}
-  </div>
-  {% endif %}
-</div>
-{% endif %}
-
-<!-- ── KPI ROW ──────────────────────────────────────────────── -->
-<div class="row g-3 mb-3">
+<!-- ══ KPI GRID ════════════════════════════════════════════════ -->
+<div class="kpi-grid">
 
   <!-- Stock disponible -->
-  <div class="col-6 col-md-4 col-xl-2">
-    <div class="kpi-card blue">
-      <div class="kpi-label">Stock disponible</div>
-      <div class="kpi-value" style="color:var(--pbi-blue)">{{ stock_dispo|floatformat:3 }}</div>
-      <div class="kpi-sub">kg restants</div>
+  <div class="kpi-card">
+    <div class="kpi-card-glow blue"></div>
+    <div class="kpi-icon blue"><i class="bi bi-box-seam-fill"></i></div>
+    <div class="kpi-label">Stock disponible</div>
+    <div class="kpi-value" style="color:var(--c-blue);">
+      {{ stock_dispo|floatformat:3 }}<span class="kpi-unit">kg</span>
+    </div>
+    <div class="kpi-footer">
+      <i class="bi bi-dot" style="color:#60a5fa;font-size:16px;margin:-3px"></i>
+      Reçu − Transféré
     </div>
   </div>
 
   <!-- Total reçu -->
-  <div class="col-6 col-md-4 col-xl-2">
-    <div class="kpi-card purple">
-      <div class="kpi-label">Total reçu</div>
-      <div class="kpi-value" style="color:var(--pbi-purple)">{{ total_recu|floatformat:3 }}</div>
-      <div class="kpi-sub">kg cumulés</div>
+  <div class="kpi-card">
+    <div class="kpi-card-glow purple"></div>
+    <div class="kpi-icon purple"><i class="bi bi-truck"></i></div>
+    <div class="kpi-label">Total reçu</div>
+    <div class="kpi-value" style="color:var(--c-purple);">
+      {{ total_recu|floatformat:1 }}<span class="kpi-unit">kg</span>
+    </div>
+    <div class="kpi-footer">
+      <i class="bi bi-dot" style="color:#a78bfa;font-size:16px;margin:-3px"></i>
+      Cumulé
     </div>
   </div>
 
-  <!-- Utilisation stock -->
-  <div class="col-6 col-md-4 col-xl-2">
-    <div class="kpi-card amber">
-      <div class="kpi-label">Taux utilisation</div>
-      <div class="kpi-value" style="color:var(--pbi-amber)">{{ utilisation_pct }}%</div>
-      <div class="util-bar mt-2">
-        <div class="util-fill" style="width:{{ utilisation_pct }}%;background:var(--pbi-amber)"></div>
-      </div>
+  <!-- Taux utilisation -->
+  <div class="kpi-card">
+    <div class="kpi-card-glow amber"></div>
+    <div class="kpi-icon amber"><i class="bi bi-speedometer2"></i></div>
+    <div class="kpi-label">Taux utilisation</div>
+    <div class="kpi-value" style="color:var(--c-amber);">
+      {{ utilisation_pct }}<span class="kpi-unit">%</span>
+    </div>
+    <div class="util-track">
+      <div class="util-fill" style="width:{{ utilisation_pct }}%;background:linear-gradient(90deg,#d97706,#fbbf24);"></div>
     </div>
   </div>
 
   <!-- Réceptions ce mois -->
-  <div class="col-6 col-md-4 col-xl-2">
-    <div class="kpi-card green">
-      <div class="kpi-label">Réceptions / mois</div>
-      <div class="kpi-value" style="color:var(--pbi-green)">{{ receptions_mois }}</div>
-      <div class="kpi-sub">
-        Total : {{ total_receptions }}
-        {% if trend_rec_pct is not None %}
-          &nbsp;
-          {% if trend_rec_dir == 'up' %}
-            <span class="trend-up">▲ {{ trend_rec_pct }}%</span>
-          {% else %}
-            <span class="trend-down">▼ {{ trend_rec_pct|slice:"1:" }}%</span>
-          {% endif %}
+  <div class="kpi-card">
+    <div class="kpi-card-glow green"></div>
+    <div class="kpi-icon green"><i class="bi bi-arrow-down-circle-fill"></i></div>
+    <div class="kpi-label">Réceptions / mois</div>
+    <div class="kpi-value" style="color:var(--c-green);">{{ receptions_mois }}</div>
+    <div class="kpi-footer">
+      Total {{ total_receptions }}
+      {% if trend_rec_pct is not None %}
+        {% if trend_rec_dir == 'up' %}
+          <span class="badge-up">▲ {{ trend_rec_pct }}%</span>
+        {% else %}
+          <span class="badge-down">▼ {{ trend_rec_pct|slice:"1:" }}%</span>
         {% endif %}
-      </div>
+      {% endif %}
     </div>
   </div>
 
   <!-- Transferts ce mois -->
-  <div class="col-6 col-md-4 col-xl-2">
-    <div class="kpi-card amber">
-      <div class="kpi-label">Transferts / mois</div>
-      <div class="kpi-value" style="color:var(--pbi-amber)">{{ transfers_mois }}</div>
-      <div class="kpi-sub">
-        Total : {{ total_transfers }}
-        {% if trend_trans_pct is not None %}
-          &nbsp;
-          {% if trend_trans_dir == 'up' %}
-            <span class="trend-up">▲ {{ trend_trans_pct }}%</span>
-          {% else %}
-            <span class="trend-down">▼ {{ trend_trans_pct|slice:"1:" }}%</span>
-          {% endif %}
+  <div class="kpi-card">
+    <div class="kpi-card-glow amber"></div>
+    <div class="kpi-icon amber"><i class="bi bi-arrow-up-circle-fill"></i></div>
+    <div class="kpi-label">Transferts / mois</div>
+    <div class="kpi-value" style="color:var(--c-amber);">{{ transfers_mois }}</div>
+    <div class="kpi-footer">
+      Total {{ total_transfers }}
+      {% if trend_trans_pct is not None %}
+        {% if trend_trans_dir == 'up' %}
+          <span class="badge-up">▲ {{ trend_trans_pct }}%</span>
+        {% else %}
+          <span class="badge-down">▼ {{ trend_trans_pct|slice:"1:" }}%</span>
         {% endif %}
-      </div>
+      {% endif %}
     </div>
   </div>
 
-  <!-- Alertes expiration -->
-  <div class="col-6 col-md-4 col-xl-2">
+  <!-- Total Qté transférée -->
+  <div class="kpi-card">
+    <div class="kpi-card-glow amber"></div>
+    <div class="kpi-icon amber"><i class="bi bi-send-fill"></i></div>
+    <div class="kpi-label">Total Qté Transferts</div>
+    <div class="kpi-value" style="color:var(--c-amber);">
+      {{ total_envoye|floatformat:3 }}<span class="kpi-unit">kg</span>
+    </div>
+    <div class="kpi-footer">
+      <i class="bi bi-dot" style="color:#fbbf24;font-size:16px;margin:-3px"></i>
+      Cumulé vers production
+    </div>
+  </div>
+
+  <!-- Quantité expirée -->
+  <div class="kpi-card">
     {% if lots_expires_count %}
-    <div class="kpi-card red">
-      <div class="kpi-label">Expirées</div>
-      <div class="kpi-value" style="color:var(--pbi-red)">{{ lots_expires_count }}</div>
-      <div class="kpi-sub">Avert. ≤7j : {{ lots_warning_count }}</div>
-    </div>
+      <div class="kpi-card-glow red"></div>
+      <div class="kpi-icon red"><i class="bi bi-x-circle-fill"></i></div>
+      <div class="kpi-label">Qté Expirée</div>
+      <div class="kpi-value" style="color:var(--c-red);">
+        {{ quantite_expiree|floatformat:1 }}<span class="kpi-unit">kg</span>
+      </div>
+      <div class="kpi-footer">
+        <i class="bi bi-dot" style="color:#f87171;font-size:16px;margin:-3px"></i>
+        {{ lots_expires_count }} lot{{ lots_expires_count|pluralize }}
+      </div>
     {% else %}
-    <div class="kpi-card green">
-      <div class="kpi-label">Expirations</div>
-      <div class="kpi-value" style="color:var(--pbi-green)">✓</div>
-      <div class="kpi-sub">Avert. ≤7j : {{ lots_warning_count }}</div>
-    </div>
+      <div class="kpi-card-glow green"></div>
+      <div class="kpi-icon green"><i class="bi bi-check-circle-fill"></i></div>
+      <div class="kpi-label">Qté Expirée</div>
+      <div class="kpi-value" style="color:var(--c-green);font-size:18px;">Aucun</div>
+      <div class="kpi-footer"><span class="badge-ok">✓ Stock sain</span></div>
+    {% endif %}
+  </div>
+
+  <!-- Alerte ≤7j -->
+  <div class="kpi-card">
+    {% if lots_warning_count %}
+      <div class="kpi-card-glow amber"></div>
+      <div class="kpi-icon amber"><i class="bi bi-exclamation-triangle-fill"></i></div>
+      <div class="kpi-label">Alerte ≤ 7 jours</div>
+      <div class="kpi-value" style="color:var(--c-amber);">
+        {{ quantite_warning|floatformat:1 }}<span class="kpi-unit">kg</span>
+      </div>
+      <div class="kpi-footer">
+        <i class="bi bi-dot" style="color:#fbbf24;font-size:16px;margin:-3px"></i>
+        {{ lots_warning_count }} lot{{ lots_warning_count|pluralize }}
+      </div>
+    {% else %}
+      <div class="kpi-card-glow green"></div>
+      <div class="kpi-icon green"><i class="bi bi-shield-check-fill"></i></div>
+      <div class="kpi-label">Alerte ≤ 7 jours</div>
+      <div class="kpi-value" style="color:var(--c-green);font-size:18px;">Aucune</div>
+      <div class="kpi-footer"><span class="badge-ok">✓ Aucune alerte</span></div>
     {% endif %}
   </div>
 
 </div>
 
-<!-- ── CHARTS ROW ───────────────────────────────────────────── -->
+<!-- ══ CHARTS ROW ══════════════════════════════════════════════ -->
 <div class="row g-3 mb-3">
 
   <!-- Évolution mensuelle -->
   <div class="col-lg-8">
     <div class="viz-card">
-      <div class="viz-header">
-        <span><i class="bi bi-bar-chart-line me-2" style="color:var(--pbi-blue)"></i>Évolution mensuelle — Réceptions vs Transferts (kg)</span>
+      <div class="viz-card-header">
+        <div class="viz-card-title">
+          <span class="icon-dot" style="background:var(--c-blue);"></span>
+          Évolution mensuelle — Réceptions vs Transferts
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <div class="legend-chip">
+            <span class="legend-dot" style="background:#2563eb;"></span> Réceptions
+          </div>
+          <div class="legend-chip">
+            <span class="legend-dot" style="background:#d97706;"></span> Transferts
+          </div>
+        </div>
       </div>
-      <div class="viz-body" style="height:260px">
+      <div class="viz-body" style="height:280px;padding:16px 18px 14px;">
         <canvas id="chartBar"></canvas>
       </div>
     </div>
   </div>
 
-  <!-- Donut stock -->
+  <!-- Répartition stock -->
   <div class="col-lg-4">
     <div class="viz-card">
-      <div class="viz-header">
-        <span><i class="bi bi-pie-chart me-2" style="color:var(--pbi-purple)"></i>Répartition stock</span>
+      <div class="viz-card-header">
+        <div class="viz-card-title">
+          <span class="icon-dot" style="background:var(--c-purple);"></span>
+          Répartition du stock
+        </div>
       </div>
-      <div class="viz-body d-flex flex-column align-items-center justify-content-center" style="height:260px">
-        <canvas id="chartDonut" style="max-height:180px"></canvas>
+      <div class="viz-body d-flex flex-column align-items-center justify-content-center" style="height:280px;">
+        <div style="position:relative;width:180px;height:180px;">
+          <canvas id="chartDonut"></canvas>
+          <div id="donut-center" style="
+            position:absolute;top:50%;left:50%;
+            transform:translate(-50%,-50%);
+            text-align:center;pointer-events:none;">
+            <div style="font-size:18px;font-weight:800;color:#0f172a;letter-spacing:-.5px;">
+              {{ total_recu|floatformat:1 }}
+            </div>
+            <div style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">
+              kg total
+            </div>
+          </div>
+        </div>
         <div class="d-flex gap-4 mt-3">
           <div class="text-center">
-            <div style="font-size:13px;font-weight:700;color:var(--pbi-blue)">{{ stock_dispo|floatformat:3 }} kg</div>
-            <div style="font-size:10px;color:#605e5c;text-transform:uppercase;letter-spacing:.4px">Disponible</div>
+            <div style="font-size:14px;font-weight:800;color:var(--c-blue);">{{ stock_dispo|floatformat:1 }} <span style="font-size:11px;font-weight:500;color:var(--c-light);">kg</span></div>
+            <div style="font-size:10px;font-weight:700;color:var(--c-light);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;">Disponible</div>
           </div>
+          <div style="width:1px;background:#e2e8f0;"></div>
           <div class="text-center">
-            <div style="font-size:13px;font-weight:700;color:var(--pbi-amber)">{{ total_envoye|floatformat:3 }} kg</div>
-            <div style="font-size:10px;color:#605e5c;text-transform:uppercase;letter-spacing:.4px">Transféré</div>
+            <div style="font-size:14px;font-weight:800;color:var(--c-amber);">{{ total_envoye|floatformat:1 }} <span style="font-size:11px;font-weight:500;color:var(--c-light);">kg</span></div>
+            <div style="font-size:10px;font-weight:700;color:var(--c-light);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;">Transféré</div>
           </div>
         </div>
       </div>
@@ -299,23 +461,26 @@ body { background: var(--pbi-bg) !important; }
 
 </div>
 
-<!-- ── TABLES ROW ───────────────────────────────────────────── -->
+<!-- ══ TABLES ROW ══════════════════════════════════════════════ -->
 <div class="row g-3">
 
   <!-- Dernières réceptions -->
   <div class="col-lg-6">
     <div class="viz-card">
-      <div class="viz-header">
-        <span><i class="bi bi-truck me-2" style="color:var(--pbi-green)"></i>Dernières réceptions</span>
-        <a href="{% url 'reception_list' %}" style="font-size:11px;color:var(--pbi-blue);text-decoration:none;font-weight:600">
+      <div class="viz-card-header">
+        <div class="viz-card-title">
+          <span class="icon-dot" style="background:var(--c-green);"></span>
+          Dernières réceptions
+        </div>
+        <a href="{% url 'reception_list' %}" class="viz-card-action">
           Voir tout <i class="bi bi-arrow-right"></i>
         </a>
       </div>
-      <div class="viz-body p-0">
-        <table class="pbi-table">
+      <div class="viz-body-flush">
+        <table class="dt">
           <thead>
             <tr>
-              <th class="ps-3">Fournisseur</th>
+              <th style="padding-left:20px;">Fournisseur</th>
               <th>Opérateur</th>
               <th>Quantité</th>
               <th>Date</th>
@@ -324,17 +489,17 @@ body { background: var(--pbi-bg) !important; }
           <tbody>
             {% for r in recent_receptions %}
             <tr>
-              <td class="ps-3">
-                <a href="{% url 'reception_detail' r.id %}" style="color:var(--pbi-blue);text-decoration:none;font-weight:600">
+              <td style="padding-left:20px;">
+                <a href="{% url 'reception_detail' r.id %}" style="color:var(--c-blue);text-decoration:none;font-weight:600;font-size:13px;">
                   {{ r.fournisseur.nom|truncatechars:20 }}
                 </a>
               </td>
-              <td style="color:#605e5c">{{ r.profile.matricule|default:"—" }}</td>
-              <td><span class="pill pill-success">{{ r.quantite|floatformat:3 }} kg</span></td>
-              <td style="color:#605e5c;font-size:12px">{{ r.date_reception|date:"d/m/Y H:i" }}</td>
+              <td><span class="dt-meta">{{ r.profile.matricule|default:"—" }}</span></td>
+              <td><span class="dt-badge green"><i class="bi bi-plus"></i>{{ r.quantite|floatformat:3 }} kg</span></td>
+              <td><span class="dt-meta">{{ r.date_reception|date:"d/m/Y H:i" }}</span></td>
             </tr>
             {% empty %}
-            <tr><td colspan="4" class="text-center py-4" style="color:#605e5c">Aucune réception</td></tr>
+            <tr><td colspan="4" class="text-center py-4 dt-meta">Aucune réception</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -345,17 +510,20 @@ body { background: var(--pbi-bg) !important; }
   <!-- Derniers transferts -->
   <div class="col-lg-6">
     <div class="viz-card">
-      <div class="viz-header">
-        <span><i class="bi bi-arrow-left-right me-2" style="color:var(--pbi-amber)"></i>Derniers transferts</span>
-        <a href="{% url 'transfert_list' %}" style="font-size:11px;color:var(--pbi-blue);text-decoration:none;font-weight:600">
+      <div class="viz-card-header">
+        <div class="viz-card-title">
+          <span class="icon-dot" style="background:var(--c-amber);"></span>
+          Derniers transferts
+        </div>
+        <a href="{% url 'transfert_list' %}" class="viz-card-action">
           Voir tout <i class="bi bi-arrow-right"></i>
         </a>
       </div>
-      <div class="viz-body p-0">
-        <table class="pbi-table">
+      <div class="viz-body-flush">
+        <table class="dt">
           <thead>
             <tr>
-              <th class="ps-3">Lot</th>
+              <th style="padding-left:20px;">Lot</th>
               <th>Opérateur</th>
               <th>Quantité</th>
               <th>Date</th>
@@ -364,19 +532,19 @@ body { background: var(--pbi-bg) !important; }
           <tbody>
             {% for t in recent_transfers %}
             <tr>
-              <td class="ps-3">
-                <a href="{% url 'transfert_detail' t.id %}" style="color:var(--pbi-blue);text-decoration:none;font-family:monospace;font-size:12px">
-                  {{ t.numero_lot }}
-                </a>
+              <td style="padding-left:20px;">
+                <a href="{% url 'transfert_detail' t.id %}" class="dt-lot">{{ t.numero_lot }}</a>
               </td>
-              <td style="color:#605e5c">
-                {% if t.profile %}{{ t.profile.nom }} {{ t.profile.prenom|slice:":1" }}.{% else %}—{% endif %}
+              <td>
+                <span class="dt-meta">
+                  {% if t.profile %}{{ t.profile.nom }} {{ t.profile.prenom|slice:":1" }}.{% else %}—{% endif %}
+                </span>
               </td>
-              <td><span class="pill pill-warning">{{ t.quantite|floatformat:3 }} kg</span></td>
-              <td style="color:#605e5c;font-size:12px">{{ t.date_heure|date:"d/m/Y H:i" }}</td>
+              <td><span class="dt-badge amber"><i class="bi bi-dash"></i>{{ t.quantite|floatformat:3 }} kg</span></td>
+              <td><span class="dt-meta">{{ t.date_heure|date:"d/m/Y H:i" }}</span></td>
             </tr>
             {% empty %}
-            <tr><td colspan="4" class="text-center py-4" style="color:#605e5c">Aucun transfert</td></tr>
+            <tr><td colspan="4" class="text-center py-4 dt-meta">Aucun transfert</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -390,12 +558,18 @@ body { background: var(--pbi-bg) !important; }
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 (function () {
-  const BLUE   = '#0078d4';
-  const AMBER  = '#c19c00';
-  const PURPLE = '#8764b8';
+  Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
   /* ── Bar chart ── */
-  new Chart(document.getElementById('chartBar'), {
+  var ctxBar = document.getElementById('chartBar').getContext('2d');
+  var gradBlue = ctxBar.createLinearGradient(0, 0, 0, 260);
+  gradBlue.addColorStop(0,   'rgba(37,99,235,.85)');
+  gradBlue.addColorStop(1,   'rgba(37,99,235,.25)');
+  var gradAmber = ctxBar.createLinearGradient(0, 0, 0, 260);
+  gradAmber.addColorStop(0,  'rgba(217,119,6,.85)');
+  gradAmber.addColorStop(1,  'rgba(217,119,6,.20)');
+
+  new Chart(ctxBar, {
     type: 'bar',
     data: {
       labels: {{ chart_labels|safe }},
@@ -403,70 +577,241 @@ body { background: var(--pbi-bg) !important; }
         {
           label: 'Réceptions (kg)',
           data:  {{ chart_rec|safe }},
-          backgroundColor: BLUE + 'bb',
-          borderColor: BLUE,
-          borderWidth: 1,
-          borderRadius: 3,
+          backgroundColor: gradBlue,
+          borderColor: '#2563eb',
+          borderWidth: 0,
+          borderRadius: { topLeft: 5, topRight: 5 },
+          borderSkipped: false,
         },
         {
           label: 'Transferts (kg)',
           data:  {{ chart_trans|safe }},
-          backgroundColor: AMBER + 'bb',
-          borderColor: AMBER,
-          borderWidth: 1,
-          borderRadius: 3,
+          backgroundColor: gradAmber,
+          borderColor: '#d97706',
+          borderWidth: 0,
+          borderRadius: { topLeft: 5, topRight: 5 },
+          borderSkipped: false,
         }
       ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { position: 'top', labels: { boxWidth: 10, font: { size: 11 }, padding: 14 } },
-        tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y.toFixed(3)} kg` } }
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0f172a',
+          titleColor: '#94a3b8',
+          bodyColor: '#f1f5f9',
+          padding: 12,
+          cornerRadius: 8,
+          callbacks: {
+            label: function(c) {
+              return '  ' + c.dataset.label + ':  ' + c.parsed.y.toFixed(3) + ' kg';
+            }
+          }
+        }
       },
       scales: {
         y: {
           beginAtZero: true,
-          grid: { color: '#f3f2f1' },
-          ticks: { callback: v => v + ' kg', font: { size: 11 }, color: '#605e5c' },
-          border: { color: '#e1dfdd' }
+          grid: { color: '#f1f5f9', drawBorder: false },
+          ticks: {
+            callback: function(v) { return v + ' kg'; },
+            font: { size: 11 }, color: '#94a3b8', padding: 8
+          },
+          border: { display: false }
         },
         x: {
           grid: { display: false },
-          ticks: { font: { size: 11 }, color: '#605e5c' },
-          border: { color: '#e1dfdd' }
+          ticks: { font: { size: 11 }, color: '#64748b' },
+          border: { display: false }
         }
       }
     }
   });
 
   /* ── Donut chart ── */
-  const dispo  = {{ donut_dispo|default:0 }};
-  const envoye = {{ donut_envoye|default:0 }};
+  var dispo  = {{ donut_dispo|default:0 }};
+  var envoye = {{ donut_envoye|default:0 }};
   new Chart(document.getElementById('chartDonut'), {
     type: 'doughnut',
     data: {
       labels: ['Disponible', 'Transféré'],
       datasets: [{
         data: [dispo, envoye],
-        backgroundColor: [BLUE + 'cc', AMBER + 'cc'],
-        borderColor: ['#fff', '#fff'],
+        backgroundColor: ['#2563eb', '#d97706'],
+        borderColor: ['#ffffff', '#ffffff'],
         borderWidth: 3,
-        hoverOffset: 6,
+        hoverOffset: 8,
+        borderRadius: 4,
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: '68%',
+      cutout: '72%',
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed.toFixed(3)} kg` } }
+        tooltip: {
+          backgroundColor: '#0f172a',
+          titleColor: '#94a3b8',
+          bodyColor: '#f1f5f9',
+          padding: 12,
+          cornerRadius: 8,
+          callbacks: {
+            label: function(c) { return '  ' + c.label + ':  ' + c.parsed.toFixed(3) + ' kg'; }
+          }
+        }
       }
     }
   });
 })();
 </script>
+
+<!-- ── Notifications expiration (son + visuel) ───────────── -->
+{% if lots_expires_count or lots_warning_count %}
+
+<style>
+#notif-panel {
+  position: fixed;
+  top: 18px; right: 18px;
+  z-index: 9999;
+  display: flex; flex-direction: column; gap: 10px;
+  max-width: 360px; width: 100%;
+}
+.notif-toast {
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.2);
+  overflow: hidden;
+  transform: translateX(110%);
+  opacity: 0;
+  transition: transform .4s cubic-bezier(.22,1,.36,1), opacity .4s ease;
+}
+.notif-toast.show { transform: translateX(0); opacity: 1; }
+.notif-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 14px;
+  font-size: 12.5px; font-weight: 700; letter-spacing: .2px;
+}
+.notif-close {
+  margin-left: auto; background: none; border: none;
+  cursor: pointer; font-size: 15px; line-height: 1;
+  opacity: .65; padding: 0 2px; color: inherit;
+}
+.notif-close:hover { opacity: 1; }
+.notif-body { padding: 8px 12px 12px; font-size: 12px; display: flex; flex-direction: column; gap: 4px; }
+.notif-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 5px 9px; border-radius: 6px; font-size: 11.5px;
+}
+.notif-toast.danger  .notif-header { background: #b91c1c; color: #fff; }
+.notif-toast.danger  .notif-body   { background: #fff5f5; }
+.notif-toast.danger  .notif-row    { background: #fee2e2; }
+.notif-toast.warning .notif-header { background: #b45309; color: #fff; }
+.notif-toast.warning .notif-body   { background: #fffbeb; }
+.notif-toast.warning .notif-row    { background: #fef3c7; }
+</style>
+
+<div id="notif-panel">
+  {% if lots_expires_count %}
+  <div class="notif-toast danger" id="notif-expired">
+    <div class="notif-header">
+      <i class="bi bi-x-circle-fill"></i>
+      {{ lots_expires_count }} lot{{ lots_expires_count|pluralize }} expiré{{ lots_expires_count|pluralize }}
+      <button class="notif-close" onclick="closeNotif('notif-expired')">✕</button>
+    </div>
+    <div class="notif-body">
+      {% for r in lots_expires_list %}
+      <div class="notif-row">
+        <strong>{{ r.lot_reference|default:r.id }}</strong>
+        <span style="color:#b91c1c;font-weight:700;">{{ r.date_expiration|date:"d/m/Y" }}</span>
+      </div>
+      {% endfor %}
+      {% if lots_expires_count > 5 %}
+      <div style="text-align:center;color:#b91c1c;font-size:11px;padding-top:3px;">
+        + {{ lots_expires_count|add:"-5" }} autre{{ lots_expires_count|add:"-5"|pluralize }}…
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if lots_warning_count %}
+  <div class="notif-toast warning" id="notif-warning">
+    <div class="notif-header">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      {{ lots_warning_count }} lot{{ lots_warning_count|pluralize }} expire{{ lots_warning_count|pluralize:",nt" }} dans ≤ 7j
+      <button class="notif-close" onclick="closeNotif('notif-warning')">✕</button>
+    </div>
+    <div class="notif-body">
+      {% for r in lots_warning_list %}
+      <div class="notif-row">
+        <strong>{{ r.lot_reference|default:r.id }}</strong>
+        <span style="color:#b45309;font-weight:700;">{{ r.date_expiration|date:"d/m/Y" }}</span>
+      </div>
+      {% endfor %}
+      {% if lots_warning_count > 5 %}
+      <div style="text-align:center;color:#b45309;font-size:11px;padding-top:3px;">
+        + {{ lots_warning_count|add:"-5" }} autre{{ lots_warning_count|add:"-5"|pluralize }}…
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+(function () {
+  function showToasts() {
+    document.querySelectorAll('.notif-toast').forEach(function(el, i) {
+      setTimeout(function() { el.classList.add('show'); }, 400 + i * 220);
+    });
+  }
+  window.closeNotif = function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.style.transform = 'translateX(110%)';
+    el.style.opacity = '0';
+    setTimeout(function() { el.remove(); }, 400);
+  };
+
+  var EXPIRES = {{ lots_expires_count }};
+  var WARNING = {{ lots_warning_count }};
+
+  function ding(ctx, freq, vol, start) {
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(vol, start);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.6);
+    osc.start(start); osc.stop(start + 0.65);
+  }
+
+  function playAlerts() {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    var t = ctx.currentTime + 0.1;
+    if (EXPIRES > 0) { ding(ctx, 880, 0.3, t); ding(ctx, 660, 0.25, t + 0.28); t += 0.9; }
+    if (WARNING > 0) { ding(ctx, 784, 0.22, t); }
+  }
+
+  function init() {
+    showToasts();
+    try { playAlerts(); }
+    catch(e) {
+      document.addEventListener('click', function once() {
+        playAlerts(); document.removeEventListener('click', once);
+      });
+    }
+  }
+
+  if (document.readyState === 'complete') { init(); }
+  else { window.addEventListener('load', init); }
+})();
+</script>
+{% endif %}
 
 {% endblock %}

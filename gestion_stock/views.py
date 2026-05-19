@@ -2,13 +2,14 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.cache import never_cache
 from django.contrib import messages
 from django.db.models import Sum, Q, Count
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
-from .models import Reception, SortieStockProduction, Profile, Fournisseur, OuvertureProduction
-from .forms import ReceptionForm, ReceptionUpdateForm, SortieStockProductionForm, OuvertureProductionForm
+from .models import Reception, SortieStockProduction, Profile, Fournisseur, OuvertureProduction, LotReception
+from .forms import ReceptionForm, ReceptionUpdateForm, SortieStockProductionForm, OuvertureProductionForm, ProfileCreateForm, ProfileUpdateForm
 from .utils import lot_expiration_info
 from . import mixins_fixed
 from .decorators import magasin_required, admin_required, production_required
@@ -45,11 +46,28 @@ class OuvertureProductionListView(mixins_fixed.ProductionAccessMixin, ListView):
             ouverture.expiration_info = lot_expiration_info(ouverture.numero_lot)
         return context
 
+@never_cache
 def landing(request):
     return render(request, "landing.html")
 
 @never_cache
 def login_view(request):
+    # If already authenticated, redirect directly to appropriate interface
+    if request.user.is_authenticated:
+        try:
+            profile_type = request.user.profile.type_operateur
+        except Profile.DoesNotExist:
+            profile_type = None
+        if profile_type == 'magasin':
+            return redirect(reverse('dashboard'))
+        if profile_type == 'production':
+            return redirect(reverse('production:data_performance'))
+        if profile_type == 'admin':
+            next_page = request.GET.get('next', '')
+            if next_page and 'magasin' in next_page:
+                return redirect(reverse('dashboard'))
+            return redirect(reverse('production:data_performance'))
+
     if request.method == "POST":
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -86,6 +104,7 @@ def login_view(request):
     next_page = request.GET.get('next')
     return render(request, "login.html", {'next': next_page})
 
+@never_cache
 @production_required
 def data_performance(request):
     from django.db.models.functions import TruncMonth
@@ -218,12 +237,21 @@ def data_performance(request):
     }
     return render(request, 'data_performance.html', context)
 
+@never_cache
 @production_required
 def profile_production(request):
-    profiles = Profile.objects.filter(type_operateur='production').order_by('nom')
-    context = {'profiles': profiles}
-    return render(request, 'profile_production.html', context)
+    profiles = Profile.objects.filter(type_operateur__in=['production', 'admin']).order_by('nom')
+    is_admin = hasattr(request.user, 'profile') and request.user.profile.type_operateur == 'admin'
+    return render(request, 'profile_production.html', {'profiles': profiles, 'is_admin': is_admin})
 
+@never_cache
+@production_required
+def profile_production_detail(request, pk):
+    profile = get_object_or_404(Profile, pk=pk)
+    ouvertures = OuvertureProduction.objects.filter(profile=profile).order_by('-date_heure_ouverture')[:20]
+    return render(request, 'profile_production_detail.html', {'profile': profile, 'ouvertures': ouvertures})
+
+@never_cache
 @login_required
 @csrf_protect
 @production_required
@@ -281,6 +309,7 @@ def reception_list(request):
     context = {'receptions': receptions}
     return render(request, "reception_list.html", context)
 
+@never_cache
 @production_required
 def stock_actuel_production(request):
     from django.utils import timezone as tz
@@ -300,6 +329,7 @@ def stock_actuel_production(request):
 @magasin_required
 def stock_actuel(request):
     from django.utils import timezone as tz
+    from datetime import timedelta
     today = tz.localdate()
     receptions = Reception.objects.select_related('fournisseur', 'profile').order_by('date_expiration')
     for r in receptions:
@@ -310,9 +340,20 @@ def stock_actuel(request):
             r.status = 'warning'
         else:
             r.status = 'ok'
-    context = {'receptions': receptions, 'total_stock': Reception.objects.aggregate(Sum('quantite'))['quantite__sum'] or 0}
+    quantite_expiree = round(float(Reception.objects.filter(date_expiration__lt=today).aggregate(t=Sum('quantite'))['t'] or 0), 3)
+    quantite_warning = round(float(Reception.objects.filter(
+        date_expiration__gte=today,
+        date_expiration__lte=today + timedelta(days=7)
+    ).aggregate(t=Sum('quantite'))['t'] or 0), 3)
+    context = {
+        'receptions': receptions,
+        'total_stock': Reception.objects.aggregate(Sum('quantite'))['quantite__sum'] or 0,
+        'quantite_expiree': quantite_expiree,
+        'quantite_warning': quantite_warning,
+    }
     return render(request, "stock_actuel.html", context)
 
+@never_cache
 @production_required
 def historique(request):
     ouvertures = OuvertureProduction.objects.select_related('profile').order_by('-date_heure_ouverture')
@@ -378,6 +419,7 @@ def dashboard(request):
     # ── Stats globales ──────────────────────────────────────────
     total_recu   = float(Reception.objects.aggregate(t=Sum('quantite'))['t'] or 0)
     total_envoye = float(SortieStockProduction.objects.aggregate(t=Sum('quantite'))['t'] or 0)
+    # Stock disponible = reçu − transféré uniquement (les lots expirés ne sont PAS déduits)
     stock_dispo  = total_recu - total_envoye
     utilisation_pct = round(total_envoye / total_recu * 100, 1) if total_recu else 0
 
@@ -409,6 +451,11 @@ def dashboard(request):
         date_expiration__gte=today,
         date_expiration__lte=today + timedelta(days=7)
     ).count()
+    quantite_expiree = round(float(Reception.objects.filter(date_expiration__lt=today).aggregate(t=Sum('quantite'))['t'] or 0), 3)
+    quantite_warning = round(float(Reception.objects.filter(
+        date_expiration__gte=today,
+        date_expiration__lte=today + timedelta(days=7)
+    ).aggregate(t=Sum('quantite'))['t'] or 0), 3)
     lots_expires_list = Reception.objects.filter(
         date_expiration__lt=today
     ).select_related('fournisseur').order_by('date_expiration')[:5]
@@ -453,6 +500,8 @@ def dashboard(request):
         'trend_trans_dir':    trend_trans_dir,
         'lots_expires_count': lots_expires_count,
         'lots_warning_count': lots_warning_count,
+        'quantite_expiree':   quantite_expiree,
+        'quantite_warning':   quantite_warning,
         'lots_expires_list':  lots_expires_list,
         'lots_warning_list':  lots_warning_list,
         'recent_receptions':  recent_receptions,
@@ -518,7 +567,7 @@ def transfert_create(request):
         if not lots_data:
             errors.append("Ajoutez au moins un lot.")
 
-        # Validate each lot
+        # Resolve canonical IDs and basic checks
         today = tz.localdate()
         for entry in lots_data:
             lot_id = canonical_lot_identifier(entry['lot_id'])
@@ -532,10 +581,19 @@ def transfert_create(request):
                 errors.append(f"Lot {entry['index']}: expiré.")
             elif entry['quantite'] <= 0:
                 errors.append(f"Lot {entry['index']}: quantité invalide.")
-            else:
-                dispo = lot_total_received(lot_id) - lot_total_sent_to_production(lot_id)
-                if entry['quantite'] > float(dispo):
-                    errors.append(f"Lot {entry['index']}: quantité insuffisante (dispo: {dispo:.3f} kg).")
+
+        # Aggregate quantities per lot and check stock (handles same lot in multiple rows)
+        if not errors:
+            from collections import defaultdict
+            lot_totals = defaultdict(float)
+            for entry in lots_data:
+                lot_totals[entry.get('canonical', '')] += entry['quantite']
+            for lot_id, total_needed in lot_totals.items():
+                if not lot_id:
+                    continue
+                dispo = float(lot_total_received(lot_id) - lot_total_sent_to_production(lot_id))
+                if total_needed > dispo:
+                    errors.append(f"Lot {lot_id}: quantité totale insuffisante (demandé: {total_needed:.3f} kg, disponible: {dispo:.3f} kg).")
 
         if not errors:
             try:
@@ -589,37 +647,366 @@ class ReceptionCreateView(mixins_fixed.MagasinAccessMixin, CreateView):
     template_name = 'reception_form.html'
     success_url = '/gestion_stock/reception/'
 
+    def _parse_lots_from_post(self, post):
+        from decimal import Decimal, InvalidOperation
+        lot_count = int(post.get('lot_count', 0) or 0)
+        lots = []
+        errors = []
+        for i in range(1, lot_count + 1):
+            code = post.get(f'lot_code{i}', '').strip()
+            qty_str = post.get(f'lot_quantite{i}', '').strip()
+            if not code:
+                continue
+            try:
+                qty = Decimal(qty_str)
+            except (InvalidOperation, ValueError):
+                errors.append(f"Quantité invalide pour le lot {i}.")
+                continue
+            if qty <= 0:
+                errors.append(f"La quantité du lot {i} doit être > 0.")
+                continue
+            lots.append({'code': code, 'quantite': qty, 'ordre': i})
+        return lots, errors
+
     def form_valid(self, form):
+        from decimal import Decimal
+        lots, errors = self._parse_lots_from_post(self.request.POST)
+        if errors or not lots:
+            for e in errors:
+                form.add_error(None, e)
+            if not lots:
+                form.add_error(None, "Veuillez saisir au moins un lot.")
+            return self.form_invalid(form)
+
         form.instance.profile = self.request.user.profile
-        return super().form_valid(form)
+        form.instance.quantite = sum(l['quantite'] for l in lots)
+        response = super().form_valid(form)
+
+        for lot_data in lots:
+            LotReception.objects.create(
+                reception=self.object,
+                code=lot_data['code'],
+                quantite=lot_data['quantite'],
+                ordre=lot_data['ordre'],
+            )
+        return response
+
+    def get_context_data(self, **kwargs):
+        import json
+        context = super().get_context_data(**kwargs)
+        form = context['form']
+        lots_data = []
+        if form.is_bound:
+            lot_count = int(form.data.get('lot_count', 0) or 0)
+            for i in range(1, lot_count + 1):
+                code = form.data.get(f'lot_code{i}', '').strip()
+                qty = form.data.get(f'lot_quantite{i}', '')
+                if code:
+                    lots_data.append({'code': code, 'qty': qty})
+        context['lots_restore_json'] = json.dumps(lots_data)
+        return context
 
 @magasin_required
 def profile_list(request):
-    profiles = Profile.objects.filter(type_operateur='magasin').order_by('nom')
-    return render(request, 'profile.html', {'profiles': profiles})
+    profiles = Profile.objects.filter(type_operateur__in=['magasin', 'admin']).order_by('nom')
+    is_admin = hasattr(request.user, 'profile') and request.user.profile.type_operateur == 'admin'
+    return render(request, 'profile.html', {'profiles': profiles, 'is_admin': is_admin})
+
+@magasin_required
+def profile_detail(request, pk):
+    profile = get_object_or_404(Profile, pk=pk)
+    receptions = Reception.objects.filter(profile=profile).select_related('fournisseur').order_by('-date_reception')[:20]
+    transferts = SortieStockProduction.objects.filter(profile=profile).order_by('-date_heure')[:20]
+    return render(request, 'profile_detail.html', {
+        'profile': profile,
+        'receptions': receptions,
+        'transferts': transferts,
+    })
+
+@magasin_required
+def profile_add(request):
+    if not (hasattr(request.user, 'profile') and request.user.profile.type_operateur == 'admin'):
+        messages.error(request, "Accès réservé aux administrateurs.")
+        return redirect('profile')
+    if request.method == 'POST':
+        form = ProfileCreateForm(request.POST, allowed_types=['magasin', 'admin'])
+        if form.is_valid():
+            matricule = form.cleaned_data['matricule']
+            user = User.objects.create_user(username=matricule, password=form.cleaned_data['password'])
+            Profile.objects.create(
+                user=user,
+                matricule=matricule,
+                nom=form.cleaned_data['nom'],
+                prenom=form.cleaned_data['prenom'],
+                type_operateur=form.cleaned_data['type_operateur'],
+            )
+            messages.success(request, f"Profile « {matricule} » créé avec succès.")
+            return redirect('profile')
+    else:
+        form = ProfileCreateForm(allowed_types=['magasin', 'admin'])
+    return render(request, 'profile_add.html', {
+        'form': form,
+        'back_url': reverse('profile'),
+        'title': 'Ajouter un Magasinier',
+        'context_type': 'magasin',
+    })
+
+@production_required
+def profile_production_add(request):
+    if not (hasattr(request.user, 'profile') and request.user.profile.type_operateur == 'admin'):
+        messages.error(request, "Accès réservé aux administrateurs.")
+        return redirect('production:profile')
+    if request.method == 'POST':
+        form = ProfileCreateForm(request.POST, allowed_types=['production'])
+        if form.is_valid():
+            matricule = form.cleaned_data['matricule']
+            user = User.objects.create_user(username=matricule, password=form.cleaned_data['password'])
+            Profile.objects.create(
+                user=user,
+                matricule=matricule,
+                nom=form.cleaned_data['nom'],
+                prenom=form.cleaned_data['prenom'],
+                type_operateur=form.cleaned_data['type_operateur'],
+            )
+            messages.success(request, f"Profile « {matricule} » créé avec succès.")
+            return redirect('production:profile')
+    else:
+        form = ProfileCreateForm(allowed_types=['production'])
+    return render(request, 'profile_add.html', {
+        'form': form,
+        'back_url': reverse('production:profile'),
+        'title': 'Ajouter un Opérateur Production',
+        'context_type': 'production',
+    })
+
+@magasin_required
+def profile_update(request, pk):
+    if not (hasattr(request.user, 'profile') and request.user.profile.type_operateur == 'admin'):
+        messages.error(request, "Accès réservé aux administrateurs.")
+        return redirect('profile')
+    profile = get_object_or_404(Profile, pk=pk)
+    if request.method == 'POST':
+        form = ProfileUpdateForm(request.POST, instance=profile, allowed_types=['magasin', 'admin'])
+        if form.is_valid():
+            old_matricule = profile.matricule
+            profile.matricule = form.cleaned_data['matricule']
+            profile.nom = form.cleaned_data['nom']
+            profile.prenom = form.cleaned_data['prenom']
+            profile.type_operateur = form.cleaned_data['type_operateur']
+            profile.save()
+            if form.cleaned_data.get('password'):
+                profile.user.set_password(form.cleaned_data['password'])
+                profile.user.save()
+            messages.success(request, f"Profile « {profile.matricule} » modifié avec succès.")
+            return redirect('profile')
+    else:
+        form = ProfileUpdateForm(instance=profile, allowed_types=['magasin', 'admin'])
+    return render(request, 'profile_update.html', {
+        'form': form,
+        'profile': profile,
+        'back_url': reverse('profile'),
+        'title': f'Modifier — {profile.matricule}',
+        'context_type': 'magasin',
+    })
+
+@production_required
+def profile_production_update(request, pk):
+    if not (hasattr(request.user, 'profile') and request.user.profile.type_operateur == 'admin'):
+        messages.error(request, "Accès réservé aux administrateurs.")
+        return redirect('production:profile')
+    profile = get_object_or_404(Profile, pk=pk)
+    if request.method == 'POST':
+        form = ProfileUpdateForm(request.POST, instance=profile, allowed_types=['production'])
+        if form.is_valid():
+            profile.matricule = form.cleaned_data['matricule']
+            profile.nom = form.cleaned_data['nom']
+            profile.prenom = form.cleaned_data['prenom']
+            profile.type_operateur = form.cleaned_data['type_operateur']
+            profile.save()
+            if form.cleaned_data.get('password'):
+                profile.user.set_password(form.cleaned_data['password'])
+                profile.user.save()
+            messages.success(request, f"Profile « {profile.matricule} » modifié avec succès.")
+            return redirect('production:profile')
+    else:
+        form = ProfileUpdateForm(instance=profile, allowed_types=['production'])
+    return render(request, 'profile_update.html', {
+        'form': form,
+        'profile': profile,
+        'back_url': reverse('production:profile'),
+        'title': f'Modifier — {profile.matricule}',
+        'context_type': 'production',
+    })
 
 @magasin_required
 def reception_detail(request, pk):
     reception = get_object_or_404(Reception, pk=pk)
-    lots = []
-    for i, code in enumerate(reception.lot_codes(), start=1):
-        if code:
-            lots.append({
-                'index': i,
-                'canonical': f"LOT-{reception.id}-{i:02d}",
-                'code': code,
-            })
+    lots = [
+        {
+            'index': lot.ordre,
+            'canonical': f"LOT-{reception.id}-{lot.ordre:02d}",
+            'code': lot.code,
+            'quantite': lot.quantite,
+        }
+        for lot in reception.lots.all()
+    ]
     context = {
         'reception': reception,
         'lots': lots,
     }
     return render(request, 'reception_detail.html', context)
 
+@magasin_required
+def reception_export_excel(request, pk):
+    import openpyxl
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from django.http import HttpResponse
+
+    reception = get_object_or_404(Reception, pk=pk)
+    lots = [
+        {
+            'index': lot.ordre,
+            'canonical': f"LOT-{reception.id}-{lot.ordre:02d}",
+            'code': lot.code,
+            'quantite': lot.quantite,
+        }
+        for lot in reception.lots.all()
+    ]
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f"Réception {reception.id}"
+
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill("solid", fgColor="17A2B8")
+    center = Alignment(horizontal="center", vertical="center")
+    thin = Side(style="thin")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+    # Titre
+    ws.merge_cells("A1:D1")
+    ws["A1"] = f"Fiche de Réception N° {reception.id}"
+    ws["A1"].font = Font(bold=True, size=14)
+    ws["A1"].alignment = center
+    ws["A1"].fill = PatternFill("solid", fgColor="E0F7FA")
+
+    # Infos générales
+    ws["A3"] = "Opérateur"
+    ws["B3"] = f"{reception.profile.nom} {reception.profile.prenom} ({reception.profile.matricule})"
+    ws["A4"] = "Fournisseur"
+    ws["B4"] = reception.fournisseur.nom
+    ws["A5"] = "Date réception"
+    ws["B5"] = reception.date_reception.strftime("%d/%m/%Y %H:%M")
+    ws["A6"] = "Date expiration"
+    ws["B6"] = reception.date_expiration.strftime("%d/%m/%Y") if reception.date_expiration else ""
+    ws["A7"] = "Quantité totale (kg)"
+    ws["B7"] = float(reception.quantite) if reception.quantite else 0
+
+    for row in range(3, 8):
+        ws[f"A{row}"].font = Font(bold=True)
+
+    # En-têtes tableau
+    headers = ["#", "ID Canonique", "Code Lot réel", "Quantité (kg)"]
+    for col, h in enumerate(headers, start=1):
+        cell = ws.cell(row=9, column=col, value=h)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center
+        cell.border = border
+
+    # Données lots
+    for row_idx, lot in enumerate(lots, start=10):
+        ws.cell(row=row_idx, column=1, value=lot['index']).border = border
+        ws.cell(row=row_idx, column=2, value=lot['canonical']).border = border
+        ws.cell(row=row_idx, column=3, value=lot['code']).border = border
+        qty_cell = ws.cell(row=row_idx, column=4, value=float(lot['quantite']) if lot['quantite'] else None)
+        qty_cell.border = border
+        qty_cell.alignment = Alignment(horizontal="right")
+
+    # Ligne total
+    total_row = 10 + len(lots)
+    ws.cell(row=total_row, column=3, value="Total").font = Font(bold=True)
+    ws.cell(row=total_row, column=3).alignment = Alignment(horizontal="right")
+    ws.cell(row=total_row, column=4, value=float(reception.quantite) if reception.quantite else 0).font = Font(bold=True)
+
+    ws.column_dimensions["A"].width = 6
+    ws.column_dimensions["B"].width = 22
+    ws.column_dimensions["C"].width = 22
+    ws.column_dimensions["D"].width = 16
+
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response["Content-Disposition"] = f'attachment; filename="reception_{reception.id}.xlsx"'
+    wb.save(response)
+    return response
+
 class ReceptionUpdateView(mixins_fixed.AdminRequiredMixin, UpdateView):
     model = Reception
     form_class = ReceptionUpdateForm
     template_name = 'reception_update_form.html'
     success_url = '/gestion_stock/reception/'
+
+    def _parse_lots_from_post(self, post):
+        from decimal import Decimal, InvalidOperation
+        lot_count = int(post.get('lot_count', 0) or 0)
+        lots = []
+        errors = []
+        for i in range(1, lot_count + 1):
+            code = post.get(f'lot_code{i}', '').strip()
+            qty_str = post.get(f'lot_quantite{i}', '').strip()
+            if not code:
+                continue
+            try:
+                qty = Decimal(qty_str)
+            except (InvalidOperation, ValueError):
+                errors.append(f"Quantité invalide pour le lot {i}.")
+                continue
+            if qty <= 0:
+                errors.append(f"La quantité du lot {i} doit être > 0.")
+                continue
+            lots.append({'code': code, 'quantite': qty, 'ordre': i})
+        return lots, errors
+
+    def form_valid(self, form):
+        lots, errors = self._parse_lots_from_post(self.request.POST)
+        if errors or not lots:
+            for e in errors:
+                form.add_error(None, e)
+            if not lots:
+                form.add_error(None, "Veuillez saisir au moins un lot.")
+            return self.form_invalid(form)
+
+        form.instance.quantite = sum(l['quantite'] for l in lots)
+        response = super().form_valid(form)
+
+        self.object.lots.all().delete()
+        for lot_data in lots:
+            LotReception.objects.create(
+                reception=self.object,
+                code=lot_data['code'],
+                quantite=lot_data['quantite'],
+                ordre=lot_data['ordre'],
+            )
+        return response
+
+    def get_context_data(self, **kwargs):
+        import json
+        context = super().get_context_data(**kwargs)
+        reception = self.object
+        if self.request.method == 'POST':
+            lot_count = int(self.request.POST.get('lot_count', 0) or 0)
+            lots_data = []
+            for i in range(1, lot_count + 1):
+                code = self.request.POST.get(f'lot_code{i}', '').strip()
+                qty = self.request.POST.get(f'lot_quantite{i}', '')
+                if code:
+                    lots_data.append({'code': code, 'qty': qty})
+        else:
+            lots_data = [
+                {'code': lot.code, 'qty': str(lot.quantite)}
+                for lot in reception.lots.all()
+            ]
+        context['lots_restore_json'] = json.dumps(lots_data)
+        return context
 
 @admin_required
 def reception_delete(request, pk):

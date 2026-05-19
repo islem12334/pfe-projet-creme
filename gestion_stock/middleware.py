@@ -36,8 +36,11 @@ class MagasinAccessMiddleware:
                 messages.error(request, "Profil manquant - contactez admin")
                 return redirect('login')
 
-            # Production-only users blocked from magasin paths
-            if request.path.startswith('/gestion_stock/production/'):
+            # Paths accessible to all authenticated roles
+            SHARED_PATHS = ['/gestion_stock/logout/']
+            if request.path in SHARED_PATHS:
+                pass  # allow all roles through
+            elif request.path.startswith('/gestion_stock/production/'):
                 if profile_type not in ['admin', 'production']:
                     return redirect('login')
             else:

@@ -24,8 +24,19 @@
 
   <!-- Main Form -->
   <div class="col-lg-8 col-xl-7">
+
+    {% if form.errors %}
+    <div class="alert alert-danger mb-3" style="font-size:13px;">
+      <ul class="mb-0">
+        {% for field in form %}{% for error in field.errors %}<li>{{ field.label }} : {{ error }}</li>{% endfor %}{% endfor %}
+        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
     <form method="post" novalidate id="receptionForm">
       {% csrf_token %}
+      <input type="hidden" name="lot_count" id="lot-count" value="0">
 
       <div class="form-card">
         <!-- Card Header -->
@@ -41,22 +52,19 @@
 
           <!-- Section 1: Lots -->
           <div class="form-section">
-            <div class="form-section-label">
-              <i class="bi bi-layers"></i>
-              Configuration des lots
-            </div>
-
-            <div class="mb-4">
-              <label class="form-label">Nombre de lots</label>
-              {{ form.nombre_lots }}
-              <p class="form-text">Sélectionnez 1 à 10 lots — les champs se génèrent automatiquement</p>
-              {% if form.nombre_lots.errors %}
-                <div class="alert alert-danger mt-2 py-2" style="font-size:12px;">{{ form.nombre_lots.errors.0 }}</div>
-              {% endif %}
+            <div class="form-section-label d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-layers"></i> Lots reçus</span>
+              <span id="lot-count-badge" style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:none; letter-spacing:0;">
+                1 lot
+              </span>
             </div>
 
             <!-- Dynamic lots container -->
             <div id="lots-container"></div>
+
+            <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="add-lot-btn" onclick="addLot()">
+              <i class="bi bi-plus-circle"></i> Ajouter un lot
+            </button>
           </div>
 
           <!-- Section 2: Infos communes -->
@@ -91,7 +99,9 @@
                   <i class="bi bi-box-seam me-1" style="color:var(--success);"></i>
                   Quantité totale (kg)
                 </label>
-                <input type="number" id="quantite-total-display" class="form-control" style="background:#f8fafc; color:var(--brand); font-weight:700;" value="0.000" step="0.001" readonly>
+                <input type="number" id="quantite-total-display" class="form-control"
+                       style="background:#f8fafc; color:var(--brand); font-weight:700;"
+                       value="0.000" step="0.001" readonly>
                 <input type="hidden" name="quantite" id="quantite-hidden" value="0.000">
                 <p class="form-text">Calculée automatiquement · somme de tous les lots</p>
               </div>
@@ -150,8 +160,8 @@
       </div>
       <div class="help-card-body">
         <ol class="help-steps">
-          <li>Choisissez le nombre de lots reçus</li>
-          <li>Saisissez le code et la quantité de chaque lot</li>
+          <li>Saisissez le code et la quantité du 1er lot</li>
+          <li>Cliquez <strong>+ Ajouter un lot</strong> pour en ajouter d'autres</li>
           <li>Sélectionnez le fournisseur</li>
           <li>Indiquez la date d'expiration</li>
           <li>Vérifiez le récapitulatif et validez</li>
@@ -161,7 +171,7 @@
             <i class="bi bi-info-circle me-1"></i> À savoir
           </div>
           <p style="font-size:12px; color:var(--text-secondary); margin:0;">
-            Le stock est mis à jour automatiquement après enregistrement.
+            Nombre de lots illimité. Le stock est mis à jour automatiquement après enregistrement.
           </p>
         </div>
       </div>
@@ -171,89 +181,138 @@
 </div>
 
 <script>
+const RESTORE_LOTS = {{ lots_restore_json|default:"[]"|safe }};
+
+function getRows() {
+  return document.querySelectorAll('#lots-container .lot-row-item');
+}
+
+function addLot(restoreCode, restoreQty) {
+  const n = getRows().length + 1;
+  const div = document.createElement('div');
+  div.className = 'lot-row-card lot-row-item';
+  div.innerHTML = `
+    <div style="display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;">
+      <div class="lot-num-badge" style="margin-bottom:2px;">${n}</div>
+      <div style="flex:1; min-width:150px;">
+        <label class="lot-label-code form-label" style="margin-bottom:4px;">Code lot ${n}</label>
+        <input type="text" name="lot_code${n}" class="form-control lot-code-input"
+               placeholder="Ex: ABC123" value="${restoreCode || ''}">
+      </div>
+      <div style="width:190px; flex-shrink:0;">
+        <label class="form-label" style="margin-bottom:4px;">
+          Quantité (kg)
+          <span style="font-size:10px; color:var(--text-muted); font-weight:400; text-transform:none;">(ce lot)</span>
+        </label>
+        <input type="number" name="lot_quantite${n}" class="form-control lot-quantite"
+               min="0.001" step="0.001" placeholder="0.000" value="${restoreQty || ''}">
+      </div>
+      <div style="flex-shrink:0; padding-bottom:2px;">
+        <button type="button" class="btn-icon btn-icon-danger lot-remove-btn"
+                onclick="removeLot(this)" title="Supprimer ce lot">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    </div>
+  `;
+  document.getElementById('lots-container').appendChild(div);
+  div.querySelector('.lot-quantite').addEventListener('input', updateTotal);
+  div.querySelector('.lot-code-input').addEventListener('input', updateRecap);
+
+  updateUI();
+  updateTotal();
+}
+
+function removeLot(btn) {
+  if (getRows().length <= 1) return;
+  btn.closest('.lot-row-item').remove();
+  renumberLots();
+  updateUI();
+  updateTotal();
+}
+
+function renumberLots() {
+  getRows().forEach((row, idx) => {
+    const n = idx + 1;
+    const badge = row.querySelector('.lot-num-badge');
+    if (badge) badge.textContent = n;
+
+    const label = row.querySelector('.lot-label-code');
+    if (label) label.textContent = `Code lot ${n}`;
+
+    const codeInput = row.querySelector('.lot-code-input');
+    if (codeInput) codeInput.name = `lot_code${n}`;
+
+    const qtyInput = row.querySelector('.lot-quantite');
+    if (qtyInput) qtyInput.name = `lot_quantite${n}`;
+  });
+}
+
+function updateUI() {
+  const n = getRows().length;
+
+  // Badge count
+  document.getElementById('lot-count-badge').textContent = n + (n > 1 ? ' lots' : ' lot');
+
+  // Sync hidden lot_count field
+  document.getElementById('lot-count').value = n;
+
+  // Hide remove button when only 1 row
+  getRows().forEach(row => {
+    const btn = row.querySelector('.lot-remove-btn');
+    if (btn) btn.style.display = n > 1 ? '' : 'none';
+  });
+}
+
+function updateTotal() {
+  let total = 0;
+  document.querySelectorAll('.lot-quantite').forEach(input => {
+    total += parseFloat(input.value) || 0;
+  });
+  const rounded = total.toFixed(3);
+  document.getElementById('quantite-total-display').value = rounded;
+  document.getElementById('quantite-hidden').value = rounded;
+  updateRecap();
+}
+
+function updateRecap() {
+  const rows = getRows();
+  let total = 0, html = '', hasData = false;
+
+  rows.forEach((row, idx) => {
+    const code = row.querySelector('.lot-code-input').value.trim();
+    const qte  = parseFloat(row.querySelector('.lot-quantite').value) || 0;
+    total += qte;
+    if (code || qte > 0) hasData = true;
+    html += `<tr>
+      <td><span class="tbl-id">${idx + 1}</span></td>
+      <td>${code ? `<span class="tbl-lot">${code}</span>` : '<span style="color:var(--text-muted);">—</span>'}</td>
+      <td><span class="tbl-qty" style="color:var(--brand);">${qte > 0 ? qte.toFixed(3) + ' kg' : '<span style="color:var(--text-muted);">—</span>'}</span></td>
+    </tr>`;
+  });
+
+  document.getElementById('recap-body').innerHTML = html;
+  document.getElementById('recap-total').textContent = total.toFixed(3) + ' kg';
+
+  const fournisseur = document.querySelector('[name="fournisseur"] option:checked')?.text || '—';
+  const dateExp = document.querySelector('[name="date_expiration"]')?.value || '—';
+  document.getElementById('recap-info').innerHTML =
+    `<i class="bi bi-building me-1"></i><strong>Fournisseur :</strong> ${fournisseur}` +
+    ` &nbsp;·&nbsp; <i class="bi bi-calendar me-1"></i><strong>Expiration :</strong> ${dateExp}`;
+
+  document.getElementById('recap-section').style.display = hasData ? 'block' : 'none';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-  const nombreLots = document.querySelector('[name="nombre_lots"]');
-  const container = document.getElementById('lots-container');
-
-  function updateTotal() {
-    let total = 0;
-    document.querySelectorAll('.lot-quantite').forEach(input => {
-      total += parseFloat(input.value) || 0;
-    });
-    const rounded = total.toFixed(3);
-    document.getElementById('quantite-total-display').value = rounded;
-    document.getElementById('quantite-hidden').value = rounded;
-    updateRecap();
+  // Restore submitted lots (after validation error) or start with 1 empty lot
+  if (RESTORE_LOTS.length > 0) {
+    RESTORE_LOTS.forEach(item => addLot(item.code, item.qty));
+  } else {
+    addLot();
   }
 
-  function updateRecap() {
-    const rows = container.querySelectorAll('.lot-row-item');
-    const recapBody = document.getElementById('recap-body');
-    const recapSection = document.getElementById('recap-section');
-    const recapInfo = document.getElementById('recap-info');
-
-    let total = 0;
-    let html = '';
-    let hasData = false;
-
-    rows.forEach((row, idx) => {
-      const code = row.querySelector('.lot-code-input').value.trim();
-      const qte = parseFloat(row.querySelector('.lot-quantite').value) || 0;
-      total += qte;
-      if (code || qte > 0) hasData = true;
-      html += `<tr>
-        <td><span class="tbl-id">${idx + 1}</span></td>
-        <td>${code ? `<span class="tbl-lot">${code}</span>` : '<span style="color:var(--text-muted);">—</span>'}</td>
-        <td><span class="tbl-qty" style="color:var(--brand);">${qte > 0 ? qte.toFixed(3) + ' kg' : '<span style="color:var(--text-muted);">—</span>'}</span></td>
-      </tr>`;
-    });
-
-    recapBody.innerHTML = html;
-    document.getElementById('recap-total').textContent = total.toFixed(3) + ' kg';
-
-    const fournisseur = document.querySelector('[name="fournisseur"] option:checked')?.text || '—';
-    const dateExp = document.querySelector('[name="date_expiration"]')?.value || '—';
-    recapInfo.innerHTML = `<i class="bi bi-building me-1"></i><strong>Fournisseur :</strong> ${fournisseur} &nbsp;·&nbsp; <i class="bi bi-calendar me-1"></i><strong>Expiration :</strong> ${dateExp}`;
-
-    recapSection.style.display = hasData ? 'block' : 'none';
-  }
-
-  function renderLots(numLots) {
-    container.innerHTML = '';
-    for (let i = 1; i <= numLots && i <= 10; i++) {
-      const div = document.createElement('div');
-      div.className = 'lot-row-card lot-row-item';
-      div.innerHTML = `
-        <div class="lot-num-badge">${i}</div>
-        <div style="flex:1; min-width:0;">
-          <label class="form-label" style="margin-bottom:4px;">Code lot ${i}</label>
-          <input type="text" name="lot_code${i}" class="form-control lot-code-input" placeholder="LOT-XXX-${i}">
-        </div>
-        <div style="width:190px; flex-shrink:0;">
-          <label class="form-label" style="margin-bottom:4px;">
-            Quantité (kg)
-            <span style="font-size:10px; color:var(--text-muted); font-weight:400; text-transform:none;">(ce lot)</span>
-          </label>
-          <input type="number" name="lot_quantite${i}" class="form-control lot-quantite"
-                 min="0.001" step="0.001" placeholder="0.000" required>
-        </div>
-      `;
-      container.appendChild(div);
-    }
-    container.querySelectorAll('.lot-quantite, .lot-code-input').forEach(input => {
-      input.addEventListener('input', updateTotal);
-    });
-    document.querySelector('[name="fournisseur"]')?.addEventListener('change', updateRecap);
-    document.querySelector('[name="date_expiration"]')?.addEventListener('change', updateRecap);
-    updateTotal();
-  }
-
-  if (nombreLots) {
-    nombreLots.addEventListener('change', function() {
-      renderLots(parseInt(this.value) || 0);
-    });
-    renderLots(parseInt(nombreLots.value) || 1);
-  }
+  document.querySelector('[name="fournisseur"]')?.addEventListener('change', updateRecap);
+  document.querySelector('[name="date_expiration"]')?.addEventListener('change', updateRecap);
 });
 </script>
 {% endblock %}

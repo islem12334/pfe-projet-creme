@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block title %}Détail Opérateur — {{ profile.matricule }}{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-hd">
+  <div>
+    <p class="page-hd-eyebrow">Production · Opérateurs</p>
+    <h1 class="page-hd-title">
+      <i class="bi bi-person-badge" style="color:var(--prod);"></i>
+      Détail du Opérateur
+    </h1>
+    <p class="page-hd-sub">{{ profile.nom }} {{ profile.prenom }}</p>
+  </div>
+  <div class="page-hd-actions">
+    <a href="{% url 'production:profile' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Retour
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <!-- Info Card -->
+  <div class="col-lg-4">
+    <div class="form-card">
+      <div class="form-card-header" style="background:linear-gradient(135deg,var(--prod-light),#fef9c3);">
+        <div class="form-card-icon" style="background:var(--prod); color:#fff;"><i class="bi bi-person"></i></div>
+        <div>
+          <p class="form-card-title">Informations</p>
+          <p class="form-card-sub">Détails de l'opérateur</p>
+        </div>
+      </div>
+      <div class="form-card-body">
+        <div class="form-section">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label" style="font-size:11px; text-transform:uppercase; color:var(--text-muted); letter-spacing:.05em;">Matricule</label>
+              <div style="font-size:15px; font-weight:700; color:var(--prod);">{{ profile.matricule }}</div>
+            </div>
+            <div class="col-6">
+              <label class="form-label" style="font-size:11px; text-transform:uppercase; color:var(--text-muted); letter-spacing:.05em;">Nom</label>
+              <div style="font-weight:600;">{{ profile.nom|default:"—" }}</div>
+            </div>
+            <div class="col-6">
+              <label class="form-label" style="font-size:11px; text-transform:uppercase; color:var(--text-muted); letter-spacing:.05em;">Prénom</label>
+              <div style="font-weight:600;">{{ profile.prenom|default:"—" }}</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label" style="font-size:11px; text-transform:uppercase; color:var(--text-muted); letter-spacing:.05em;">Type</label>
+              <div><span class="badge" style="background:var(--prod); color:#fff; padding:5px 12px; border-radius:20px; font-size:12px;">{{ profile.get_type_operateur_display }}</span></div>
+            </div>
+            <div class="col-12">
+              <label class="form-label" style="font-size:11px; text-transform:uppercase; color:var(--text-muted); letter-spacing:.05em;">Compte utilisateur</label>
+              <div style="font-size:13px; color:var(--text-secondary);">{{ profile.user.username }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historique consommation récente -->
+  <div class="col-lg-8">
+    <div class="data-card">
+      <div class="data-card-header">
+        <span class="data-card-title">
+          <i class="bi bi-clock-history" style="color:var(--text-muted);"></i>
+          Consommations récentes
+        </span>
+        <span class="count-pill count-pill-prod">{{ ouvertures|length }}</span>
+      </div>
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Date / Heure</th>
+            <th>Lot</th>
+            <th>Produit</th>
+            <th>OF</th>
+            <th>Qté (pcs)</th>
+            <th>Shift</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in ouvertures %}
+          <tr>
+            <td style="font-size:12px; color:var(--text-muted);">
+              {{ o.date_heure_ouverture|date:"d/m/Y" }}<br>
+              <span style="font-size:11px;">{{ o.date_heure_ouverture|date:"H:i" }}</span>
+            </td>
+            <td><span class="tbl-lot">{{ o.numero_lot }}</span></td>
+            <td style="font-weight:500; font-size:13px;">{{ o.nom_produit }}</td>
+            <td style="font-size:12px; color:var(--text-secondary);">{{ o.numero_ordre_fabrication }}</td>
+            <td><span class="tbl-qty" style="color:var(--prod);">{{ o.quantite }} <small style="font-weight:400; color:var(--text-muted);">pcs</small></span></td>
+            <td>
+              <span class="badge" style="background:var(--prod-light); color:var(--prod); border:1px solid #fde68a; font-size:11px;">{{ o.shift }}</span>
+            </td>
+            <td>
+              <a href="{% url 'production:ouverture_detail' o.pk %}" class="btn-icon btn-icon-info" title="Voir">
+                <i class="bi bi-eye"></i>
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7">
+              <div class="empty-state">
+                <i class="bi bi-inbox empty-state-icon"></i>
+                <p class="empty-state-title">Aucune consommation enregistrée</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

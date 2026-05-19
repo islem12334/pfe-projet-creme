@@ -8,13 +8,20 @@
     <div>
       <h1 class="mb-2">
         <i class="bi bi-people text-primary me-2"></i>
-        Liste des Magasinier
+        Liste des Opérateurs
       </h1>
-      <p class="text-muted">Opérateurs de type "magasin" uniquement (admins filtrés)</p>
+      <p class="text-muted">Magasiniers et administrateurs</p>
     </div>
-    <a href="/admin/gestion_stock/profile/" class="btn btn-primary btn-lg">
-      <i class="bi bi-gear me-2"></i>Gérer dans Admin
-    </a>
+    <div class="d-flex gap-2">
+      {% if is_admin %}
+      <a href="{% url 'profile_add' %}" class="btn btn-success btn-lg">
+        <i class="bi bi-person-plus me-2"></i>Ajouter Profile
+      </a>
+      {% endif %}
+      <a href="/admin/gestion_stock/profile/" class="btn btn-primary btn-lg">
+        <i class="bi bi-gear me-2"></i>Gérer dans Admin
+      </a>
+    </div>
   </div>
 
   {% if profiles %}
@@ -39,16 +46,22 @@
             <td class="fw-bold">{{ profile.nom }}</td>
             <td>{{ profile.prenom }}</td>
             <td>
-              <span class="badge-type">Magasinier</span>
+              {% if profile.type_operateur == 'admin' %}
+                <span class="badge-type" style="background:linear-gradient(135deg,#ef4444,#b91c1c);">Administrateur</span>
+              {% else %}
+                <span class="badge-type">Magasinier</span>
+              {% endif %}
             </td>
             <td class="text-center">
               <div class="btn-group" role="group">
-                <a href="#" class="btn btn-outline-primary btn-sm">
+                <a href="{% url 'profile_detail' profile.id %}" class="btn btn-outline-primary btn-sm">
                   <i class="bi bi-eye"></i>
                 </a>
-                <a href="/admin/gestion_stock/profile/{{ profile.id }}/change/" target="_blank" class="btn btn-outline-secondary btn-sm">
+                {% if is_admin %}
+                <a href="{% url 'profile_update' profile.id %}" class="btn btn-outline-secondary btn-sm">
                   <i class="bi bi-pencil"></i>
                 </a>
+                {% endif %}
               </div>
             </td>
           </tr>

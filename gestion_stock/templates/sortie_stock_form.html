@@ -179,17 +179,30 @@ function buildSelect(name, idx) {
   return html;
 }
 
+// Retourne la quantité déjà saisie dans les AUTRES lignes pour le même lot
+function otherRowsQty(lotValue, excludeRow) {
+  let total = 0;
+  document.querySelectorAll('.lot-row-card').forEach(row => {
+    if (row === excludeRow) return;
+    const sel = row.querySelector('.lot-select');
+    if (sel && sel.value === lotValue) {
+      total += parseFloat(row.querySelector('.lot-qte')?.value) || 0;
+    }
+  });
+  return total;
+}
+
 function onLotChange(select, idx) {
-  const dispo = LOT_DISPO[select.value] || 0;
+  const lotTotal = LOT_DISPO[select.value] || 0;
   const row = select.closest('.lot-row-card');
   const qteInput = row.querySelector('.lot-qte');
   const dispoBox = row.querySelector('.lot-dispo-box');
 
-  if (select.value && dispo > 0) {
-    // Préremplir avec quantité disponible
-    qteInput.value = dispo.toFixed(3);
+  if (select.value && lotTotal > 0) {
+    const alreadyUsed = otherRowsQty(select.value, row);
+    const dispo = Math.max(0, lotTotal - alreadyUsed);
+    qteInput.value = dispo > 0 ? dispo.toFixed(3) : '';
     qteInput.max   = dispo.toFixed(3);
-    // Afficher info disponible du lot sélectionné
     dispoBox.innerHTML = `
       <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
         <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:var(--r-md); padding:7px 14px; display:flex; align-items:center; gap:7px;">
